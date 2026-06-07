@@ -21,6 +21,36 @@ class ParkScene {
         this.PARK_SIZE = 120;
         this.GROUND_SIZE = 200;
         
+        this.animationSystem = {
+            fps: 60,
+            maxAnimationSize: 1024 * 1024,
+            blendTime: 0.2,
+            states: {
+                IDLE: 'idle',
+                WALK: 'walk',
+                RUN: 'run',
+                REST: 'rest',
+                FLY: 'fly'
+            },
+            directions: {
+                FORWARD: 'forward',
+                BACKWARD: 'backward',
+                LEFT: 'left',
+                RIGHT: 'right'
+            }
+        };
+        
+        this.keys = {};
+        this.controlledCharacter = null;
+        
+        this.performanceMonitor = {
+            frameCount: 0,
+            fps: 0,
+            lastFpsUpdate: 0,
+            animationFrameTime: 0,
+            maxFrameTime: 0
+        };
+        
         this.init();
     }
 
@@ -97,6 +127,9 @@ class ParkScene {
             
             this.setupEventListeners();
             console.log('✓ 事件监听器创建完成');
+            
+            this.setupKeyboardControls();
+            console.log('✓ 键盘控制器创建完成');
             
             this.animate();
             console.log('✓ 渲染循环启动');
@@ -856,8 +889,51 @@ class ParkScene {
             type: 'character', 
             name: '张爷爷',
             walkSpeed: 0,
-            swayOffset: Math.random() * Math.PI * 2
+            swayOffset: Math.random() * Math.PI * 2,
+            characterType: 'elderly'
         };
+        
+        this.buildCharacterSkeleton(personGroup, 'elderly');
+        
+        const bones = personGroup.userData.bones;
+        if (bones) {
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                hair.position.set(0, 0.07, 0);
+                beard.position.set(0, -0.13, 0.15);
+                bones.head.add(head);
+                bones.head.add(hair);
+                bones.head.add(beard);
+            }
+            if (bones.chest) {
+                body.position.set(0, 0, 0);
+                body.scale.set(1, 1.1, 1);
+                bones.chest.add(body);
+            }
+            if (bones.leftArm) {
+                leftArm.position.set(0, 0, 0);
+                leftArm.rotation.set(0, 0, 0.3);
+                bones.leftArm.add(leftArm);
+            }
+            if (bones.rightArm) {
+                rightArm.position.set(0, 0, 0);
+                rightArm.rotation.set(0, 0, -0.3);
+                bones.rightArm.add(rightArm);
+            }
+            if (bones.leftLeg) {
+                leftLeg.position.set(0, 0, 0);
+                bones.leftLeg.add(leftLeg);
+                leftShoe.position.set(0, -0.3, 0.02);
+                bones.leftLeg.add(leftShoe);
+            }
+            if (bones.rightLeg) {
+                rightLeg.position.set(0, 0, 0);
+                bones.rightLeg.add(rightLeg);
+                rightShoe.position.set(0, -0.3, 0.02);
+                bones.rightLeg.add(rightShoe);
+            }
+        }
+        
         return personGroup;
     }
 
@@ -959,8 +1035,58 @@ class ParkScene {
             name: '小明',
             walkSpeed: 0.02,
             swayOffset: Math.random() * Math.PI * 2,
-            jumpOffset: Math.random() * Math.PI * 2
+            jumpOffset: Math.random() * Math.PI * 2,
+            characterType: 'child'
         };
+        
+        this.buildCharacterSkeleton(personGroup, 'child');
+        
+        const bones = personGroup.userData.bones;
+        if (bones) {
+            if (bones.hips) bones.hips.scale.set(0.7, 0.7, 0.7);
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                hair.position.set(0, 0.07, 0);
+                cap.position.set(0, 0.1, 0);
+                capBrim.position.set(0, 0.03, 0.15);
+                bones.head.add(head);
+                bones.head.add(hair);
+                bones.head.add(cap);
+                bones.head.add(capBrim);
+            }
+            if (bones.chest) {
+                body.position.set(0, 0, 0);
+                body.scale.set(1, 0.8, 1);
+                bones.chest.add(body);
+            }
+            if (bones.leftArm) {
+                leftArm.position.set(0, 0, 0);
+                leftArm.rotation.set(0, 0, 0.5);
+                bones.leftArm.add(leftArm);
+            }
+            if (bones.rightArm) {
+                rightArm.position.set(0, 0, 0);
+                rightArm.rotation.set(0, 0, -0.5);
+                bones.rightArm.add(rightArm);
+                balloon.position.set(0.05, -0.1, 0.1);
+                string.position.set(0, -0.3, 0);
+                bones.rightForearm.add(balloon);
+                bones.rightForearm.add(string);
+            }
+            if (bones.leftLeg) {
+                leftLeg.position.set(0, 0, 0);
+                bones.leftLeg.add(leftLeg);
+                leftShoe.position.set(0, -0.25, 0.02);
+                bones.leftLeg.add(leftShoe);
+            }
+            if (bones.rightLeg) {
+                rightLeg.position.set(0, 0, 0);
+                bones.rightLeg.add(rightLeg);
+                rightShoe.position.set(0, -0.25, 0.02);
+                bones.rightLeg.add(rightShoe);
+            }
+        }
+        
         return personGroup;
     }
 
@@ -1055,8 +1181,59 @@ class ParkScene {
             type: 'character', 
             name: '李阿姨',
             walkSpeed: 0.01,
-            swayOffset: Math.random() * Math.PI * 2
+            swayOffset: Math.random() * Math.PI * 2,
+            characterType: 'auntie'
         };
+        
+        this.buildCharacterSkeleton(personGroup, 'auntie');
+        
+        const bones = personGroup.userData.bones;
+        if (bones) {
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                hair.position.set(0, 0.07, 0);
+                bun.position.set(0, 0.2, -0.1);
+                bones.head.add(head);
+                bones.head.add(hair);
+                bones.head.add(bun);
+            }
+            if (bones.chest) {
+                body.position.set(0, 0, 0);
+                body.scale.set(1, 1.1, 1);
+                collar.position.set(0, 0.5, 0);
+                collar.rotation.x = Math.PI / 2;
+                bones.chest.add(body);
+                bones.chest.add(collar);
+            }
+            if (bones.leftArm) {
+                leftArm.position.set(0, 0, 0);
+                leftArm.rotation.set(0, 0, 0.2);
+                bones.leftArm.add(leftArm);
+                bag.position.set(-0.1, 0, 0);
+                bagStrap.position.set(0, 0.1, 0);
+                bagStrap.rotation.y = Math.PI / 2;
+                bones.leftShoulder.add(bag);
+                bones.leftShoulder.add(bagStrap);
+            }
+            if (bones.rightArm) {
+                rightArm.position.set(0, 0, 0);
+                rightArm.rotation.set(0, 0, -0.2);
+                bones.rightArm.add(rightArm);
+            }
+            if (bones.leftLeg) {
+                leftLeg.position.set(0, 0, 0);
+                bones.leftLeg.add(leftLeg);
+                leftShoe.position.set(0, -0.3, 0.02);
+                bones.leftLeg.add(leftShoe);
+            }
+            if (bones.rightLeg) {
+                rightLeg.position.set(0, 0, 0);
+                bones.rightLeg.add(rightLeg);
+                rightShoe.position.set(0, -0.3, 0.02);
+                bones.rightLeg.add(rightShoe);
+            }
+        }
+        
         return personGroup;
     }
 
@@ -1176,8 +1353,53 @@ class ParkScene {
             type: 'animal', 
             name: '小黄',
             walkSpeed: 0.025,
-            wagOffset: Math.random() * Math.PI * 2
+            wagOffset: Math.random() * Math.PI * 2,
+            animalType: 'dog'
         };
+        
+        this.buildAnimalSkeleton(dogGroup, 'dog');
+        
+        const bones = dogGroup.userData.bones;
+        if (bones) {
+            if (bones.hips) bones.hips.scale.set(1.2, 1.2, 1.2);
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                leftEar.position.set(-0.05, 0.08, 0.07);
+                rightEar.position.set(0.05, 0.08, 0.07);
+                leftEye.position.set(-0.05, 0.03, 0.1);
+                rightEye.position.set(0.05, 0.03, 0.1);
+                nose.position.set(0, -0.02, 0.12);
+                tongue.position.set(0, -0.06, 0.1);
+                bones.head.add(head);
+                bones.head.add(leftEar);
+                bones.head.add(rightEar);
+                bones.head.add(leftEye);
+                bones.head.add(rightEye);
+                bones.head.add(nose);
+                bones.head.add(tongue);
+            }
+            if (bones.chest) {
+                body.position.set(0, 0, 0);
+                body.rotation.z = Math.PI / 2;
+                bodyFront.position.set(0.15, 0, 0);
+                bodyBack.position.set(-0.15, 0, 0);
+                collar.position.set(0.2, 0, 0);
+                collar.rotation.y = Math.PI / 2;
+                tag.position.set(0.2, -0.1, 0);
+                tag.rotation.x = Math.PI / 2;
+                bones.chest.add(body);
+                bones.chest.add(bodyFront);
+                bones.chest.add(bodyBack);
+                bones.chest.add(collar);
+                bones.chest.add(tag);
+            }
+            if (bones.tail3) {
+                tail.position.set(0, 0, 0);
+                tail.rotation.z = 0;
+                bones.tail3.add(tail);
+            }
+        }
+        
         return dogGroup;
     }
 
@@ -1308,8 +1530,56 @@ class ParkScene {
             type: 'animal', 
             name: '小花',
             walkSpeed: 0.015,
-            tailOffset: Math.random() * Math.PI * 2
+            tailOffset: Math.random() * Math.PI * 2,
+            animalType: 'cat'
         };
+        
+        this.buildAnimalSkeleton(catGroup, 'cat');
+        
+        const bones = catGroup.userData.bones;
+        if (bones) {
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                leftEar.position.set(-0.05, 0.1, 0.05);
+                rightEar.position.set(0.05, 0.1, 0.05);
+                leftInnerEar.position.set(-0.05, 0.1, 0.06);
+                rightInnerEar.position.set(0.05, 0.1, 0.06);
+                leftEye.position.set(-0.04, 0.03, 0.08);
+                rightEye.position.set(0.04, 0.03, 0.08);
+                nose.position.set(0, -0.02, 0.1);
+                bones.head.add(head);
+                bones.head.add(leftEar);
+                bones.head.add(rightEar);
+                bones.head.add(leftInnerEar);
+                bones.head.add(rightInnerEar);
+                bones.head.add(leftEye);
+                bones.head.add(rightEye);
+                bones.head.add(nose);
+            }
+            if (bones.chest) {
+                body.position.set(0, 0, 0);
+                body.rotation.z = Math.PI / 2;
+                bodyFront.position.set(0.12, 0, 0);
+                bodyBack.position.set(-0.12, 0, 0);
+                bones.chest.add(body);
+                bones.chest.add(bodyFront);
+                bones.chest.add(bodyBack);
+                for (let i = 0; i < 4; i++) {
+                    if (catGroup.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry' && c.position.x === -0.1 + i * 0.08)) {
+                        const stripe = catGroup.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry' && c.position.x === -0.1 + i * 0.08);
+                        if (stripe) {
+                            stripe.position.set(-0.1 + i * 0.08, 0.1, 0);
+                            bones.chest.add(stripe);
+                        }
+                    }
+                }
+            }
+            if (bones.tail3) {
+                tail.position.set(0, 0, 0);
+                bones.tail3.add(tail);
+            }
+        }
+        
         return catGroup;
     }
 
@@ -1405,8 +1675,53 @@ class ParkScene {
             name: '小鸽子',
             walkSpeed: 0.01,
             wingOffset: Math.random() * Math.PI * 2,
-            hopOffset: Math.random() * Math.PI * 2
+            hopOffset: Math.random() * Math.PI * 2,
+            animalType: 'pigeon'
         };
+        
+        this.buildAnimalSkeleton(birdGroup, 'pigeon');
+        
+        const bones = birdGroup.userData.bones;
+        if (bones) {
+            if (bones.head) {
+                head.position.set(0, 0, 0);
+                beak.position.set(0, -0.02, 0.08);
+                eye.position.set(0.02, 0.02, 0.03);
+                bones.head.add(head);
+                bones.head.add(beak);
+                bones.head.add(eye);
+            }
+            if (bones.body) {
+                body.position.set(0, 0, 0);
+                body.rotation.z = Math.PI / 2;
+                bodyFront.position.set(0.05, 0, 0);
+                bodyBack.position.set(-0.05, 0, 0);
+                tail.position.set(-0.1, 0, 0);
+                bones.body.add(body);
+                bones.body.add(bodyFront);
+                bones.body.add(bodyBack);
+                bones.body.add(tail);
+            }
+            if (bones.leftWing && bones.rightWing) {
+                leftWing.position.set(0, 0, 0);
+                rightWing.position.set(0, 0, 0);
+                leftWing.rotation.z = 0;
+                rightWing.rotation.z = 0;
+                bones.leftWing.add(leftWing);
+                bones.rightWing.add(rightWing);
+            }
+            if (bones.leftLeg && bones.rightLeg) {
+                leftLeg.position.set(0, 0, 0);
+                rightLeg.position.set(0, 0, 0);
+                leftFoot.position.set(0, -0.03, 0);
+                rightFoot.position.set(0, -0.03, 0);
+                bones.leftLeg.add(leftLeg);
+                bones.leftLeg.add(leftFoot);
+                bones.rightLeg.add(rightLeg);
+                bones.rightLeg.add(rightFoot);
+            }
+        }
+        
         return birdGroup;
     }
 
@@ -2347,6 +2662,565 @@ class ParkScene {
         });
     }
 
+    setupKeyboardControls() {
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.code] = true;
+            if (e.code === 'Tab') {
+                e.preventDefault();
+                this.switchControlledCharacter();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            this.keys[e.code] = false;
+        });
+        
+        if (this.characters.length > 0) {
+            this.controlledCharacter = this.characters[1];
+            console.log('🎮 键盘控制已启用，按WASD移动角色，Tab切换角色');
+        }
+    }
+
+    switchControlledCharacter() {
+        const allControllables = [...this.characters, ...this.animals];
+        if (allControllables.length === 0) return;
+        
+        const currentIndex = allControllables.indexOf(this.controlledCharacter);
+        const nextIndex = (currentIndex + 1) % allControllables.length;
+        this.controlledCharacter = allControllables[nextIndex];
+        
+        const name = this.controlledCharacter.userData.name || '未知角色';
+        console.log(`🎯 已切换控制: ${name}`);
+    }
+
+    createAnimationStateMachine() {
+        return {
+            currentState: 'idle',
+            previousState: 'idle',
+            currentDirection: 'forward',
+            blendWeight: 1,
+            blendSpeed: 5,
+            stateTime: 0,
+            moveSpeed: 0,
+            targetMoveSpeed: 0,
+            
+            setState(newState, direction = 'forward') {
+                if (this.currentState !== newState) {
+                    this.previousState = this.currentState;
+                    this.currentState = newState;
+                    this.blendWeight = 0;
+                    this.stateTime = 0;
+                }
+                this.currentDirection = direction;
+            },
+            
+            update(delta, isMoving, moveDirection) {
+                this.stateTime += delta;
+                this.blendWeight = Math.min(1, this.blendWeight + delta * this.blendSpeed);
+                
+                this.targetMoveSpeed = isMoving ? (this.currentState === 'run' ? 1 : 0.5) : 0;
+                this.moveSpeed += (this.targetMoveSpeed - this.moveSpeed) * delta * 8;
+                
+                if (isMoving && moveDirection) {
+                    this.currentDirection = moveDirection;
+                    if (this.currentState === 'idle') {
+                        this.setState('walk', moveDirection);
+                    }
+                } else if (!isMoving && this.currentState !== 'idle' && this.currentState !== 'rest') {
+                    this.setState('idle');
+                }
+            },
+            
+            getBlendedValue(prevValue, currValue) {
+                return prevValue * (1 - this.blendWeight) + currValue * this.blendWeight;
+            }
+        };
+    }
+
+    createSkeletonBone(name, position, rotation) {
+        const bone = new THREE.Group();
+        bone.name = name;
+        bone.position.copy(position || new THREE.Vector3());
+        if (rotation) bone.rotation.set(rotation.x, rotation.y, rotation.z);
+        bone.userData.isBone = true;
+        return bone;
+    }
+
+    buildCharacterSkeleton(personGroup, characterType) {
+        const bones = {};
+        
+        bones.hips = this.createSkeletonBone('hips', new THREE.Vector3(0, 0.5, 0));
+        personGroup.add(bones.hips);
+        
+        bones.spine = this.createSkeletonBone('spine', new THREE.Vector3(0, 0.35, 0));
+        bones.hips.add(bones.spine);
+        
+        bones.chest = this.createSkeletonBone('chest', new THREE.Vector3(0, 0.25, 0));
+        bones.spine.add(bones.chest);
+        
+        bones.neck = this.createSkeletonBone('neck', new THREE.Vector3(0, 0.15, 0));
+        bones.chest.add(bones.neck);
+        
+        bones.head = this.createSkeletonBone('head', new THREE.Vector3(0, 0.2, 0));
+        bones.neck.add(bones.head);
+        
+        bones.leftShoulder = this.createSkeletonBone('leftShoulder', new THREE.Vector3(-0.25, 0, 0));
+        bones.chest.add(bones.leftShoulder);
+        
+        bones.leftArm = this.createSkeletonBone('leftArm', new THREE.Vector3(0, -0.2, 0));
+        bones.leftShoulder.add(bones.leftArm);
+        
+        bones.leftForearm = this.createSkeletonBone('leftForearm', new THREE.Vector3(0, -0.2, 0));
+        bones.leftArm.add(bones.leftForearm);
+        
+        bones.rightShoulder = this.createSkeletonBone('rightShoulder', new THREE.Vector3(0.25, 0, 0));
+        bones.chest.add(bones.rightShoulder);
+        
+        bones.rightArm = this.createSkeletonBone('rightArm', new THREE.Vector3(0, -0.2, 0));
+        bones.rightShoulder.add(bones.rightArm);
+        
+        bones.rightForearm = this.createSkeletonBone('rightForearm', new THREE.Vector3(0, -0.2, 0));
+        bones.rightArm.add(bones.rightForearm);
+        
+        bones.leftHip = this.createSkeletonBone('leftHip', new THREE.Vector3(-0.12, 0, 0));
+        bones.hips.add(bones.leftHip);
+        
+        bones.leftLeg = this.createSkeletonBone('leftLeg', new THREE.Vector3(0, -0.3, 0));
+        bones.leftHip.add(bones.leftLeg);
+        
+        bones.leftCalf = this.createSkeletonBone('leftCalf', new THREE.Vector3(0, -0.3, 0));
+        bones.leftLeg.add(bones.leftCalf);
+        
+        bones.rightHip = this.createSkeletonBone('rightHip', new THREE.Vector3(0.12, 0, 0));
+        bones.hips.add(bones.rightHip);
+        
+        bones.rightLeg = this.createSkeletonBone('rightLeg', new THREE.Vector3(0, -0.3, 0));
+        bones.rightHip.add(bones.rightLeg);
+        
+        bones.rightCalf = this.createSkeletonBone('rightCalf', new THREE.Vector3(0, -0.3, 0));
+        bones.rightLeg.add(bones.rightCalf);
+        
+        personGroup.userData.bones = bones;
+        personGroup.userData.animationState = this.createAnimationStateMachine();
+        
+        return bones;
+    }
+
+    buildAnimalSkeleton(animalGroup, animalType) {
+        const bones = {};
+        
+        if (animalType === 'dog' || animalType === 'cat') {
+            bones.hips = this.createSkeletonBone('hips', new THREE.Vector3(0, 0.3, 0));
+            animalGroup.add(bones.hips);
+            
+            bones.spine1 = this.createSkeletonBone('spine1', new THREE.Vector3(0, 0.05, 0.1));
+            bones.hips.add(bones.spine1);
+            
+            bones.spine2 = this.createSkeletonBone('spine2', new THREE.Vector3(0, 0.05, 0.15));
+            bones.spine1.add(bones.spine2);
+            
+            bones.chest = this.createSkeletonBone('chest', new THREE.Vector3(0, 0.05, 0.15));
+            bones.spine2.add(bones.chest);
+            
+            bones.neck = this.createSkeletonBone('neck', new THREE.Vector3(0, 0.1, 0.1));
+            bones.chest.add(bones.neck);
+            
+            bones.head = this.createSkeletonBone('head', new THREE.Vector3(0, 0.1, 0.1));
+            bones.neck.add(bones.head);
+            
+            bones.tail1 = this.createSkeletonBone('tail1', new THREE.Vector3(0, 0, -0.1));
+            bones.hips.add(bones.tail1);
+            
+            bones.tail2 = this.createSkeletonBone('tail2', new THREE.Vector3(0, 0.02, -0.1));
+            bones.tail1.add(bones.tail2);
+            
+            bones.tail3 = this.createSkeletonBone('tail3', new THREE.Vector3(0, 0.03, -0.08));
+            bones.tail2.add(bones.tail3);
+            
+            bones.leftFrontShoulder = this.createSkeletonBone('leftFrontShoulder', new THREE.Vector3(-0.1, 0, 0.2));
+            bones.chest.add(bones.leftFrontShoulder);
+            
+            bones.leftFrontLeg = this.createSkeletonBone('leftFrontLeg', new THREE.Vector3(0, -0.15, 0));
+            bones.leftFrontShoulder.add(bones.leftFrontLeg);
+            
+            bones.leftFrontPaw = this.createSkeletonBone('leftFrontPaw', new THREE.Vector3(0, -0.15, 0));
+            bones.leftFrontLeg.add(bones.leftFrontPaw);
+            
+            bones.rightFrontShoulder = this.createSkeletonBone('rightFrontShoulder', new THREE.Vector3(0.1, 0, 0.2));
+            bones.chest.add(bones.rightFrontShoulder);
+            
+            bones.rightFrontLeg = this.createSkeletonBone('rightFrontLeg', new THREE.Vector3(0, -0.15, 0));
+            bones.rightFrontShoulder.add(bones.rightFrontLeg);
+            
+            bones.rightFrontPaw = this.createSkeletonBone('rightFrontPaw', new THREE.Vector3(0, -0.15, 0));
+            bones.rightFrontLeg.add(bones.rightFrontPaw);
+            
+            bones.leftBackHip = this.createSkeletonBone('leftBackHip', new THREE.Vector3(-0.1, 0, -0.05));
+            bones.hips.add(bones.leftBackHip);
+            
+            bones.leftBackLeg = this.createSkeletonBone('leftBackLeg', new THREE.Vector3(0, -0.15, 0));
+            bones.leftBackHip.add(bones.leftBackLeg);
+            
+            bones.leftBackPaw = this.createSkeletonBone('leftBackPaw', new THREE.Vector3(0, -0.15, 0));
+            bones.leftBackLeg.add(bones.leftBackPaw);
+            
+            bones.rightBackHip = this.createSkeletonBone('rightBackHip', new THREE.Vector3(0.1, 0, -0.05));
+            bones.hips.add(bones.rightBackHip);
+            
+            bones.rightBackLeg = this.createSkeletonBone('rightBackLeg', new THREE.Vector3(0, -0.15, 0));
+            bones.rightBackHip.add(bones.rightBackLeg);
+            
+            bones.rightBackPaw = this.createSkeletonBone('rightBackPaw', new THREE.Vector3(0, -0.15, 0));
+            bones.rightBackLeg.add(bones.rightBackPaw);
+        } else if (animalType === 'pigeon') {
+            bones.body = this.createSkeletonBone('body', new THREE.Vector3(0, 0.1, 0));
+            animalGroup.add(bones.body);
+            
+            bones.neck = this.createSkeletonBone('neck', new THREE.Vector3(0, 0.05, 0.05));
+            bones.body.add(bones.neck);
+            
+            bones.head = this.createSkeletonBone('head', new THREE.Vector3(0, 0.05, 0.05));
+            bones.neck.add(bones.head);
+            
+            bones.leftWing = this.createSkeletonBone('leftWing', new THREE.Vector3(-0.08, 0, 0));
+            bones.body.add(bones.leftWing);
+            
+            bones.leftWingTip = this.createSkeletonBone('leftWingTip', new THREE.Vector3(-0.12, 0, 0));
+            bones.leftWing.add(bones.leftWingTip);
+            
+            bones.rightWing = this.createSkeletonBone('rightWing', new THREE.Vector3(0.08, 0, 0));
+            bones.body.add(bones.rightWing);
+            
+            bones.rightWingTip = this.createSkeletonBone('rightWingTip', new THREE.Vector3(0.12, 0, 0));
+            bones.rightWing.add(bones.rightWingTip);
+            
+            bones.tail = this.createSkeletonBone('tail', new THREE.Vector3(0, 0, -0.08));
+            bones.body.add(bones.tail);
+            
+            bones.leftLeg = this.createSkeletonBone('leftLeg', new THREE.Vector3(-0.03, -0.05, 0));
+            bones.body.add(bones.leftLeg);
+            
+            bones.rightLeg = this.createSkeletonBone('rightLeg', new THREE.Vector3(0.03, -0.05, 0));
+            bones.body.add(bones.rightLeg);
+        }
+        
+        animalGroup.userData.bones = bones;
+        animalGroup.userData.animationState = this.createAnimationStateMachine();
+        
+        return bones;
+    }
+
+    attachMeshToBone(mesh, bone, offset) {
+        mesh.position.copy(offset || new THREE.Vector3());
+        bone.add(mesh);
+    }
+
+    animateHumanCharacter(character, time, delta) {
+        const state = character.userData.animationState;
+        const bones = character.userData.bones;
+        
+        if (!state || !bones) return;
+        
+        let isMoving = false;
+        let moveDirection = 'forward';
+        let moveX = 0;
+        let moveZ = 0;
+        
+        if (character === this.controlledCharacter) {
+            if (this.keys['KeyW']) { moveZ = -1; isMoving = true; moveDirection = 'forward'; }
+            if (this.keys['KeyS']) { moveZ = 1; isMoving = true; moveDirection = 'backward'; }
+            if (this.keys['KeyA']) { moveX = -1; isMoving = true; moveDirection = 'left'; }
+            if (this.keys['KeyD']) { moveX = 1; isMoving = true; moveDirection = 'right'; }
+            if (this.keys['ShiftLeft'] && isMoving) {
+                state.setState('run', moveDirection);
+            } else if (isMoving) {
+                state.setState('walk', moveDirection);
+            }
+            
+            if (moveX !== 0 || moveZ !== 0) {
+                const angle = Math.atan2(moveX, moveZ);
+                const targetRotation = angle;
+                character.rotation.y += (targetRotation - character.rotation.y) * delta * 10;
+                
+                const speed = state.currentState === 'run' ? 3 : 1.5;
+                character.position.x += Math.sin(targetRotation) * speed * delta;
+                character.position.z += Math.cos(targetRotation) * speed * delta;
+                
+                character.position.x = Math.max(-this.PARK_SIZE / 2 + 2, Math.min(this.PARK_SIZE / 2 - 2, character.position.x));
+                character.position.z = Math.max(-this.PARK_SIZE / 2 + 2, Math.min(this.PARK_SIZE / 2 - 2, character.position.z));
+            }
+        }
+        
+        state.update(delta, isMoving, moveDirection);
+        
+        const cycleSpeed = state.currentState === 'run' ? 12 : state.currentState === 'walk' ? 6 : 0;
+        const cycle = time * cycleSpeed;
+        const amplitude = state.currentState === 'run' ? 0.6 : state.currentState === 'walk' ? 0.4 : 0;
+        
+        const idleSway = Math.sin(time * 1.5) * 0.02;
+        const idleBreath = Math.sin(time * 2) * 0.01;
+        
+        if (bones.hips) {
+            const walkBob = Math.abs(Math.sin(cycle)) * amplitude * 0.1;
+            bones.hips.position.y = 0.5 + idleSway + walkBob;
+            bones.hips.rotation.z = Math.sin(cycle) * amplitude * 0.1;
+        }
+        
+        if (bones.spine) {
+            bones.spine.rotation.x = idleBreath;
+        }
+        
+        if (bones.chest) {
+            bones.chest.rotation.x = -idleBreath * 0.5;
+        }
+        
+        if (bones.head) {
+            bones.head.rotation.x = Math.sin(time * 1.2) * 0.03;
+            bones.head.rotation.y = Math.sin(time * 0.8) * 0.02;
+        }
+        
+        if (bones.leftArm && bones.rightArm) {
+            const armSwing = Math.sin(cycle) * amplitude;
+            bones.leftArm.rotation.x = state.currentState === 'idle' ? Math.sin(time * 2) * 0.1 : -armSwing;
+            bones.rightArm.rotation.x = state.currentState === 'idle' ? -Math.sin(time * 2) * 0.1 : armSwing;
+            
+            if (bones.leftForearm) bones.leftForearm.rotation.x = state.currentState === 'idle' ? 0.2 : Math.abs(Math.sin(cycle)) * 0.3;
+            if (bones.rightForearm) bones.rightForearm.rotation.x = state.currentState === 'idle' ? 0.2 : Math.abs(Math.sin(cycle + Math.PI)) * 0.3;
+        }
+        
+        if (bones.leftLeg && bones.rightLeg) {
+            const legSwing = Math.sin(cycle) * amplitude;
+            bones.leftLeg.rotation.x = state.currentState === 'idle' ? 0 : legSwing;
+            bones.rightLeg.rotation.x = state.currentState === 'idle' ? 0 : -legSwing;
+            
+            if (bones.leftCalf) bones.leftCalf.rotation.x = state.currentState === 'idle' ? 0 : Math.max(0, -Math.sin(cycle)) * 0.8;
+            if (bones.rightCalf) bones.rightCalf.rotation.x = state.currentState === 'idle' ? 0 : Math.max(0, Math.sin(cycle)) * 0.8;
+        }
+    }
+
+    animateDogCharacter(animal, time, delta) {
+        const state = animal.userData.animationState;
+        const bones = animal.userData.bones;
+        
+        if (!state || !bones) return;
+        
+        let isMoving = false;
+        let moveDirection = 'forward';
+        
+        if (animal === this.controlledCharacter) {
+            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
+                isMoving = true;
+            }
+            if (this.keys['ShiftLeft'] && isMoving) {
+                state.setState('run', moveDirection);
+            } else if (isMoving) {
+                state.setState('walk', moveDirection);
+            }
+        }
+        
+        if (!isMoving && Math.random() < 0.001) {
+            if (state.currentState === 'idle') {
+                state.setState('rest');
+            } else if (state.currentState === 'rest' && Math.random() < 0.01) {
+                state.setState('idle');
+            }
+        }
+        
+        state.update(delta, isMoving, moveDirection);
+        
+        const cycleSpeed = state.currentState === 'run' ? 15 : state.currentState === 'walk' ? 7 : 0;
+        const cycle = time * cycleSpeed;
+        const amplitude = state.currentState === 'run' ? 0.8 : state.currentState === 'walk' ? 0.5 : 0;
+        
+        if (bones.hips) {
+            const walkBob = Math.abs(Math.sin(cycle)) * amplitude * 0.08;
+            bones.hips.position.y = 0.3 + walkBob;
+            bones.hips.rotation.z = Math.sin(cycle) * amplitude * 0.15;
+        }
+        
+        if (bones.spine1 && bones.spine2) {
+            bones.spine1.rotation.z = Math.sin(cycle) * amplitude * 0.1;
+            bones.spine2.rotation.z = -Math.sin(cycle) * amplitude * 0.05;
+        }
+        
+        if (bones.tail1 && bones.tail2 && bones.tail3) {
+            const wagSpeed = state.currentState === 'run' ? 12 : state.currentState === 'walk' ? 8 : 4;
+            const wagAmount = state.currentState === 'rest' ? 0.1 : 0.4;
+            bones.tail1.rotation.y = Math.sin(time * wagSpeed) * wagAmount;
+            bones.tail2.rotation.y = Math.sin(time * wagSpeed + 0.3) * wagAmount * 0.8;
+            bones.tail3.rotation.y = Math.sin(time * wagSpeed + 0.6) * wagAmount * 0.6;
+            
+            if (state.currentState === 'rest') {
+                bones.tail1.rotation.x = -0.5;
+                bones.tail2.rotation.x = -0.3;
+            } else {
+                bones.tail1.rotation.x = 0;
+                bones.tail2.rotation.x = 0;
+            }
+        }
+        
+        if (bones.head && bones.neck) {
+            if (state.currentState === 'rest') {
+                bones.neck.rotation.x = 0.3;
+                bones.head.rotation.x = 0.2;
+            } else {
+                bones.neck.rotation.x = 0;
+                bones.head.rotation.x = Math.sin(time * 1.5) * 0.05;
+                bones.head.rotation.y = Math.sin(time) * 0.03;
+            }
+        }
+        
+        if (bones.leftFrontLeg && bones.rightFrontLeg && bones.leftBackLeg && bones.rightBackLeg) {
+            const phase = state.currentState === 'run' ? 0 : Math.PI;
+            bones.leftFrontLeg.rotation.x = Math.sin(cycle) * amplitude;
+            bones.rightFrontLeg.rotation.x = Math.sin(cycle + Math.PI) * amplitude;
+            bones.leftBackLeg.rotation.x = Math.sin(cycle + phase) * amplitude;
+            bones.rightBackLeg.rotation.x = Math.sin(cycle + phase + Math.PI) * amplitude;
+            
+            if (bones.leftFrontPaw) bones.leftFrontPaw.rotation.x = Math.max(0, -Math.sin(cycle)) * 0.3;
+            if (bones.rightFrontPaw) bones.rightFrontPaw.rotation.x = Math.max(0, -Math.sin(cycle + Math.PI)) * 0.3;
+            if (bones.leftBackPaw) bones.leftBackPaw.rotation.x = Math.max(0, -Math.sin(cycle + phase)) * 0.3;
+            if (bones.rightBackPaw) bones.rightBackPaw.rotation.x = Math.max(0, -Math.sin(cycle + phase + Math.PI)) * 0.3;
+        }
+    }
+
+    animateCatCharacter(animal, time, delta) {
+        const state = animal.userData.animationState;
+        const bones = animal.userData.bones;
+        
+        if (!state || !bones) return;
+        
+        let isMoving = false;
+        
+        if (animal === this.controlledCharacter) {
+            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
+                isMoving = true;
+            }
+        }
+        
+        if (!isMoving && Math.random() < 0.002) {
+            if (state.currentState === 'idle') {
+                state.setState('rest');
+            } else if (state.currentState === 'rest' && Math.random() < 0.005) {
+                state.setState('idle');
+            }
+        }
+        
+        state.update(delta, isMoving, 'forward');
+        
+        const cycleSpeed = state.currentState === 'walk' ? 5 : 0;
+        const cycle = time * cycleSpeed;
+        const amplitude = state.currentState === 'walk' ? 0.4 : 0;
+        
+        if (bones.hips) {
+            const walkBob = Math.abs(Math.sin(cycle)) * amplitude * 0.06;
+            bones.hips.position.y = 0.3 + walkBob;
+            bones.hips.rotation.z = Math.sin(cycle) * amplitude * 0.1;
+        }
+        
+        if (bones.spine1 && bones.spine2) {
+            bones.spine1.rotation.x = Math.sin(time * 0.5) * 0.05;
+            bones.spine2.rotation.x = -Math.sin(time * 0.5) * 0.03;
+        }
+        
+        if (bones.tail1 && bones.tail2 && bones.tail3) {
+            const tailSpeed = state.currentState === 'rest' ? 1 : state.currentState === 'walk' ? 3 : 2;
+            const tailAmount = state.currentState === 'rest' ? 0.2 : 0.3;
+            bones.tail1.rotation.y = Math.sin(time * tailSpeed) * tailAmount;
+            bones.tail1.rotation.x = state.currentState === 'rest' ? 0.5 : 0;
+            bones.tail2.rotation.y = Math.sin(time * tailSpeed + 0.5) * tailAmount * 0.8;
+            bones.tail3.rotation.y = Math.sin(time * tailSpeed + 1) * tailAmount * 0.6;
+        }
+        
+        if (bones.head && bones.neck) {
+            if (state.currentState === 'rest') {
+                bones.neck.rotation.x = 0.4;
+                bones.head.rotation.x = 0.1;
+                bones.head.rotation.y = Math.sin(time * 0.3) * 0.05;
+            } else {
+                bones.neck.rotation.x = 0;
+                bones.head.rotation.x = Math.sin(time * 2) * 0.03;
+            }
+        }
+        
+        if (bones.leftFrontLeg && bones.rightFrontLeg && bones.leftBackLeg && bones.rightBackLeg) {
+            bones.leftFrontLeg.rotation.x = Math.sin(cycle) * amplitude;
+            bones.rightFrontLeg.rotation.x = Math.sin(cycle + Math.PI) * amplitude;
+            bones.leftBackLeg.rotation.x = Math.sin(cycle + Math.PI * 0.8) * amplitude;
+            bones.rightBackLeg.rotation.x = Math.sin(cycle + Math.PI * 1.8) * amplitude;
+        }
+    }
+
+    animatePigeonCharacter(animal, time, delta) {
+        const state = animal.userData.animationState;
+        const bones = animal.userData.bones;
+        
+        if (!state || !bones) return;
+        
+        let isMoving = false;
+        let isFlying = false;
+        
+        if (animal === this.controlledCharacter) {
+            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
+                isMoving = true;
+            }
+            if (this.keys['Space']) {
+                isFlying = true;
+                state.setState('fly');
+            }
+        }
+        
+        if (!isFlying && !isMoving && Math.random() < 0.005) {
+            if (state.currentState === 'idle') {
+                state.setState('rest');
+            } else if (state.currentState === 'rest' && Math.random() < 0.02) {
+                state.setState('idle');
+            }
+        }
+        
+        if (isFlying) {
+            state.setState('fly');
+        } else if (isMoving && state.currentState !== 'fly') {
+            state.setState('walk');
+        } else if (!isMoving && state.currentState === 'walk') {
+            state.setState('idle');
+        }
+        
+        state.update(delta, isMoving || isFlying, 'forward');
+        
+        if (state.currentState === 'fly') {
+            animal.position.y = 2 + Math.sin(time * 2) * 0.5;
+        } else {
+            animal.position.y = 0;
+        }
+        
+        if (bones.leftWing && bones.rightWing && bones.leftWingTip && bones.rightWingTip) {
+            const wingSpeed = state.currentState === 'fly' ? 15 : state.currentState === 'walk' ? 3 : 1;
+            const wingAmount = state.currentState === 'fly' ? 1.2 : state.currentState === 'walk' ? 0.2 : 0.05;
+            
+            bones.leftWing.rotation.z = Math.sin(time * wingSpeed) * wingAmount;
+            bones.rightWing.rotation.z = -Math.sin(time * wingSpeed) * wingAmount;
+            bones.leftWingTip.rotation.z = Math.sin(time * wingSpeed + 0.3) * wingAmount * 0.5;
+            bones.rightWingTip.rotation.z = -Math.sin(time * wingSpeed + 0.3) * wingAmount * 0.5;
+        }
+        
+        if (bones.body) {
+            const bobSpeed = state.currentState === 'fly' ? 4 : state.currentState === 'walk' ? 6 : 1;
+            bones.body.position.y = 0.1 + Math.sin(time * bobSpeed) * (state.currentState === 'fly' ? 0.05 : 0.02);
+        }
+        
+        if (bones.head && bones.neck) {
+            const headBob = state.currentState === 'walk' ? Math.sin(time * 8) * 0.03 : Math.sin(time * 2) * 0.01;
+            bones.neck.position.y = 0.05 + headBob;
+        }
+        
+        if (state.currentState === 'walk' && bones.leftLeg && bones.rightLeg) {
+            const cycle = time * 8;
+            bones.leftLeg.rotation.x = Math.sin(cycle) * 0.3;
+            bones.rightLeg.rotation.x = Math.sin(cycle + Math.PI) * 0.3;
+        }
+    }
+
     animateCharacter(character, time) {
         const data = character.userData;
         const sway = Math.sin(time * 2 + data.swayOffset) * 0.02;
@@ -2440,11 +3314,63 @@ class ParkScene {
         }
     }
 
+    runAnimationTests() {
+        console.log('🧪 开始动画系统测试...');
+        
+        console.log('📊 帧率测试: 当前FPS =', this.performanceMonitor.fps);
+        console.log('⏱️  最大帧耗时:', this.performanceMonitor.maxFrameTime.toFixed(3), 'ms');
+        
+        let totalBones = 0;
+        let animatedCharacters = 0;
+        
+        this.characters.forEach(char => {
+            if (char.userData.bones) {
+                animatedCharacters++;
+                totalBones += Object.keys(char.userData.bones).length;
+            }
+        });
+        
+        this.animals.forEach(animal => {
+            if (animal.userData.bones) {
+                animatedCharacters++;
+                totalBones += Object.keys(animal.userData.bones).length;
+            }
+        });
+        
+        console.log('🦴 骨骼系统:');
+        console.log('   - 带动画的角色数:', animatedCharacters);
+        console.log('   - 总骨骼数:', totalBones);
+        
+        console.log('🎬 动画状态机测试:');
+        if (this.characters.length > 0 && this.characters[0].userData.animationState) {
+            const state = this.characters[0].userData.animationState;
+            console.log('   - 状态机存在: ✅');
+            console.log('   - 当前状态:', state.currentState);
+            console.log('   - 混合权重:', state.blendWeight.toFixed(2));
+        }
+        
+        const fileSize = new Blob([JSON.stringify(this.characters) + JSON.stringify(this.animals)]).size;
+        console.log('📦 角色数据大小:', (fileSize / 1024).toFixed(2), 'KB');
+        console.log('✅ 动画系统测试完成!');
+    }
+
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
         
+        const frameStartTime = performance.now();
         const time = this.clock.getElapsedTime();
         const delta = this.clock.getDelta();
+        
+        this.performanceMonitor.frameCount++;
+        if (time - this.performanceMonitor.lastFpsUpdate >= 1) {
+            this.performanceMonitor.fps = this.performanceMonitor.frameCount;
+            this.performanceMonitor.frameCount = 0;
+            this.performanceMonitor.lastFpsUpdate = time;
+            
+            if (time < 5) {
+                console.log(`🎮 FPS: ${this.performanceMonitor.fps} | 控制角色: ${this.controlledCharacter?.userData?.name || '无'}`);
+            }
+        }
         
         this.scene.traverse((obj) => {
             if (obj instanceof THREE.PointLight && !obj.userData.isShopLight) {
@@ -2453,11 +3379,26 @@ class ParkScene {
         });
         
         this.characters.forEach(char => {
-            this.animateCharacter(char, time);
+            if (char.userData.bones && char.userData.animationState) {
+                this.animateHumanCharacter(char, time, delta);
+            } else {
+                this.animateCharacter(char, time);
+            }
         });
         
         this.animals.forEach(animal => {
-            this.animateAnimal(animal, time);
+            if (animal.userData.bones && animal.userData.animationState) {
+                const animalType = animal.userData.animalType;
+                if (animalType === 'dog') {
+                    this.animateDogCharacter(animal, time, delta);
+                } else if (animalType === 'cat') {
+                    this.animateCatCharacter(animal, time, delta);
+                } else if (animalType === 'pigeon') {
+                    this.animatePigeonCharacter(animal, time, delta);
+                }
+            } else {
+                this.animateAnimal(animal, time);
+            }
         });
         
         this.shops.forEach(shop => {
@@ -2476,9 +3417,24 @@ class ParkScene {
             this.controls.update();
         }
         this.renderer.render(this.scene, this.camera);
+        
+        const frameEndTime = performance.now();
+        const frameTime = frameEndTime - frameStartTime;
+        this.performanceMonitor.animationFrameTime = frameTime;
+        this.performanceMonitor.maxFrameTime = Math.max(this.performanceMonitor.maxFrameTime, frameTime);
     }
 }
 
 window.addEventListener('load', () => {
-    new ParkScene();
+    const parkScene = new ParkScene();
+    
+    setTimeout(() => {
+        if (parkScene.runAnimationTests) {
+            parkScene.runAnimationTests();
+        }
+    }, 3000);
+    
+    window.parkScene = parkScene;
+    console.log('💡 提示: 在控制台输入 parkScene.runAnimationTests() 运行动画测试');
+    console.log('🎮 控制说明: WASD移动 | Shift奔跑 | Tab切换角色 | 空格(鸽子)飞行');
 });
