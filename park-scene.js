@@ -17,22 +17,61 @@ class ParkScene {
     }
 
     init() {
-        this.createScene();
-        this.createCamera();
-        this.createRenderer();
-        this.createControls();
-        this.createLighting();
-        this.createGround();
-        this.createLandscape();
-        this.createPaths();
-        this.createFacilities();
-        this.createLightingSystem();
-        this.setupEventListeners();
-        this.animate();
-        
-        setTimeout(() => {
-            document.getElementById('loading').style.display = 'none';
-        }, 1000);
+        try {
+            console.log('开始初始化公园场景...');
+            
+            this.createScene();
+            console.log('✓ 场景创建完成');
+            
+            this.createCamera();
+            console.log('✓ 相机创建完成');
+            
+            this.createRenderer();
+            console.log('✓ 渲染器创建完成');
+            
+            this.createControls();
+            console.log('✓ 控制器创建完成');
+            
+            this.createLighting();
+            console.log('✓ 光照系统创建完成');
+            
+            this.createGround();
+            console.log('✓ 地面创建完成');
+            
+            this.createLandscape();
+            console.log('✓ 景观元素创建完成');
+            
+            this.createPaths();
+            console.log('✓ 路径创建完成');
+            
+            this.createFacilities();
+            console.log('✓ 设施创建完成');
+            
+            this.createLightingSystem();
+            console.log('✓ 照明系统创建完成');
+            
+            this.setupEventListeners();
+            console.log('✓ 事件监听器创建完成');
+            
+            this.animate();
+            console.log('✓ 渲染循环启动');
+            
+            console.log('🎉 公园3D场景初始化完成！');
+            
+            setTimeout(() => {
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ 场景初始化失败:', error);
+            const loadingEl = document.getElementById('loading');
+            if (loadingEl) {
+                loadingEl.innerHTML = '<div style="color: #e74c3c; font-weight: bold;">场景加载失败</div><div style="font-size: 12px; margin-top: 10px;">' + error.message + '</div>';
+            }
+        }
     }
 
     createScene() {
@@ -67,6 +106,10 @@ class ParkScene {
     }
 
     createControls() {
+        if (typeof THREE.OrbitControls === 'undefined') {
+            console.warn('OrbitControls 未加载，使用基础相机控制');
+            return;
+        }
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
@@ -115,7 +158,7 @@ class ParkScene {
             const y = Math.random() * 512;
             const size = Math.random() * 2 + 1;
             const green = Math.floor(Math.random() * 60) + 80;
-            ctx.fillStyle = `rgba(${Math.floor(green * 0.4}, ${green}, ${Math.floor(green * 0.2)}, ${Math.random() * 0.3 + 0.1})`;
+            ctx.fillStyle = `rgba(${Math.floor(green * 0.4)}, ${green}, ${Math.floor(green * 0.2)}, ${Math.random() * 0.3 + 0.1})`;
             ctx.fillRect(x, y, size, size * 2);
         }
         
@@ -698,6 +741,12 @@ class ParkScene {
         
         const view = views[viewName] || views.aerial;
         
+        if (!this.controls) {
+            this.camera.position.copy(view.pos);
+            this.camera.lookAt(view.target);
+            return;
+        }
+        
         const startPos = this.camera.position.clone();
         const startTarget = this.controls.target.clone();
         const endPos = view.pos;
@@ -712,8 +761,10 @@ class ParkScene {
             const eased = 1 - Math.pow(1 - progress, 3);
             
             this.camera.position.lerpVectors(startPos, endPos, eased);
-            this.controls.target.lerpVectors(startTarget, endTarget, eased);
-            this.controls.update();
+            if (this.controls) {
+                this.controls.target.lerpVectors(startTarget, endTarget, eased);
+                this.controls.update();
+            }
             
             if (progress < 1) {
                 requestAnimationFrame(animateCamera);
@@ -828,7 +879,9 @@ class ParkScene {
             }
         });
         
-        this.controls.update();
+        if (this.controls) {
+            this.controls.update();
+        }
         this.renderer.render(this.scene, this.camera);
     }
 }

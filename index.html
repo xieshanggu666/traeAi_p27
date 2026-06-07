@@ -179,8 +179,36 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="park-scene.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('页面错误:', e.error || e.message);
+            var loading = document.getElementById('loading');
+            if (loading && loading.style.display !== 'none') {
+                loading.innerHTML = '<div style="color: #e74c3c; font-weight: bold;">加载出错</div><div style="font-size: 12px; margin-top: 10px;">' + (e.message || '请刷新页面重试') + '</div>';
+            }
+        });
+        
+        function checkScriptLoaded() {
+            if (typeof THREE !== 'undefined') {
+                console.log('✅ Three.js 加载成功, 版本:', THREE.REVISION);
+                if (typeof THREE.OrbitControls !== 'undefined') {
+                    console.log('✅ OrbitControls 加载成功');
+                } else {
+                    console.warn('⚠️ OrbitControls 未加载，将使用基础浏览模式');
+                }
+            } else {
+                console.error('❌ Three.js 加载失败');
+            }
+        }
+        
+        if (document.readyState === 'complete') {
+            checkScriptLoaded();
+        } else {
+            window.addEventListener('load', checkScriptLoaded);
+        }
+    </script>
+    <script src="park-scene.js?v=3"></script>
 </body>
 </html>
