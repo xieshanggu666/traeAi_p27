@@ -214,8 +214,25 @@
         } else {
             window.addEventListener('load', checkScriptLoaded);
         }
+        
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                    loading.style.visibility = 'hidden';
+                }
+            }, 2000);
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var existingPopup = document.getElementById('shop-info-popup');
+            if (existingPopup) {
+                existingPopup.style.display = 'none';
+            }
+        });
     </script>
     <script src="traffic-system.js?v=1"></script>
-    <script src="park-scene.js?v=6"></script>
+    <script src="park-scene.js?v=7"></script>
 </body>
 </html>

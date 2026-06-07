@@ -24,9 +24,24 @@ class ParkScene {
         this.init();
     }
 
+    hideLoading() {
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+            loadingEl.style.visibility = 'hidden';
+            loadingEl.style.opacity = '0';
+            loadingEl.style.pointerEvents = 'none';
+            console.log('✅ 加载层已隐藏');
+        }
+    }
+
     init() {
         try {
             console.log('开始初始化公园场景...');
+            
+            setTimeout(() => this.hideLoading(), 100);
+            setTimeout(() => this.hideLoading(), 1000);
+            setTimeout(() => this.hideLoading(), 3000);
             
             this.createScene();
             console.log('✓ 场景创建完成');
@@ -88,12 +103,8 @@ class ParkScene {
             
             console.log('🎉 公园3D场景初始化完成！');
             
-            setTimeout(() => {
-                const loadingEl = document.getElementById('loading');
-                if (loadingEl) {
-                    loadingEl.style.display = 'none';
-                }
-            }, 500);
+            this.hideLoading();
+            setTimeout(() => this.hideLoading(), 200);
             
         } catch (error) {
             console.error('❌ 场景初始化失败:', error);
