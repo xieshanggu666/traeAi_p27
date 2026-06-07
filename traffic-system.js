@@ -222,6 +222,27 @@ class TrafficSystem {
         this.defineRoadPaths();
     }
 
+    /**
+     * 定义车辆行驶路径
+     * 
+     * 功能描述：
+     * 创建4条环形行驶路径（外环顺时针、外环逆时针、内环顺时针、内环逆时针），
+     * 确保所有车辆都在公园周边的公路上行驶，不会穿越公园区域。
+     * 
+     * 路径设计说明：
+     * - 每条路径由一系列三维坐标点(Vector3)组成
+     * - 路径点顺序决定了车辆行驶方向
+     * - 转弯处设置平滑过渡点，避免直角转弯
+     * - 使用模运算实现路径循环
+     * 
+     * 关键变量：
+     * - offset: 主干道距离中心的偏移量(75单位)
+     * - secondaryOffset: 次干道距离中心的偏移量(37.5单位)
+     * - laneOffsetMain: 主干道车道偏移量(2单位)，用于区分双向车道
+     * - laneOffsetSec: 次干道车道偏移量(1.5单位)
+     * - turnRadius: 主干道转弯半径(6单位)
+     * - turnRadiusSec: 次干道转弯半径(4单位)
+     */
     defineRoadPaths() {
         const offset = this.ROAD_OFFSET;
         const secondaryOffset = offset / 2;
@@ -446,6 +467,33 @@ class TrafficSystem {
         });
     }
 
+    /**
+     * 创建车辆模型
+     * 
+     * 功能描述：
+     * 根据指定类型和颜色创建3D车辆模型，包括轿车和公交车两种类型。
+     * 模型包含车身、车窗、车轮、车灯等组件。
+     * 
+     * 重要注意：
+     * 车辆模型的默认车头朝向为 +X 轴方向（前灯位于 x=1.01 位置）
+     * 这一点在计算车辆旋转角度时必须考虑，需要加上 PI/2 的偏移量
+     * 
+     * @param {string} type - 车辆类型：'sedan'(轿车) 或 'bus'(公交车)
+     * @param {number} color - 车身颜色，十六进制颜色值
+     * @returns {THREE.Group} 包含车辆所有组件的Group对象
+     * 
+     * userData属性说明：
+     * - type: 对象类型，固定为 'vehicle'
+     * - vehicleType: 车辆具体类型
+     * - wheels: 车轮Mesh数组，用于动画旋转
+     * - baseSpeed: 基础行驶速度
+     * - currentSpeed: 当前行驶速度
+     * - pathIndex: 当前所在路径索引
+     * - pathPointIndex: 当前路径点索引
+     * - progress: 当前路段的行驶进度(0-1)
+     * - currentPath: 当前行驶路径对象
+     * - isWaiting: 是否在等待(红灯或前车)
+     */
     createCar(type = 'sedan', color = 0xe74c3c) {
         const carGroup = new THREE.Group();
         
@@ -585,6 +633,30 @@ class TrafficSystem {
         return carGroup;
     }
 
+    /**
+     * 创建并初始化所有车辆
+     * 
+     * 功能描述：
+     * 根据配置创建多辆不同类型、不同颜色的车辆，分布在不同的行驶路径上。
+     * 每辆车被放置在路径的指定位置，并根据行驶方向正确设置初始朝向。
+     * 
+     * 实现逻辑：
+     * 1. 定义车辆配置数组，指定每辆车的路径、类型、颜色、初始位置
+     * 2. 遍历配置创建每辆车
+     * 3. 根据路径点计算初始位置和朝向
+     * 4. 将车辆添加到场景和车辆管理数组中
+     * 
+     * 关键注意：
+     * 车辆模型默认朝向为 +X 方向，而 Math.atan2(dir.x, dir.z) 计算的是
+     * 从 +Z 方向开始的旋转角度。因此需要加上 Math.PI/2 偏移量，
+     * 使车头正确指向运动方向。
+     * 
+     * 旋转角度公式推导：
+     * - Three.js 中 rotation.y = 0 时，物体正面朝向 +Z 轴
+     * - 我们的车辆模型正面朝向 +X 轴
+     * - 因此需要额外旋转 90 度(PI/2)使车头与运动方向一致
+     * - 最终公式：rotation.y = Math.atan2(dir.x, dir.z) + Math.PI / 2
+     */
     createVehicles() {
         const colors = [0xe74c3c, 0x3498db, 0x2ecc71, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xe91e63];
         
@@ -617,7 +689,7 @@ class TrafficSystem {
             vehicle.position.y = 0.4;
             
             const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
-            vehicle.rotation.y = Math.atan2(dir.x, dir.z);
+            vehicle.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI / 2;
             
             this.vehicles.push(vehicle);
             this.scene.add(vehicle);
@@ -687,6 +759,44 @@ class TrafficSystem {
         return 'green';
     }
 
+    /**
+     * 更新所有车辆的位置和状态
+     * 
+     * 功能描述：
+     * 每帧调用，更新所有车辆的位置、速度、朝向。实现路径跟随、
+     * 交通信号灯检测、前车避撞等核心车辆运动逻辑。
+     * 
+     * @param {number} time - 场景运行的总时间(秒)，用于动画同步
+     * @param {number} delta - 距上一帧的时间间隔(秒)，用于帧率无关的运动计算
+     * 
+     * 运动轨迹算法实现逻辑：
+     * 1. 路径点插值：车辆在相邻两个路径点之间线性插值移动
+     *    - 使用 progress (0-1) 表示在当前路段上的位置
+     *    - position = lerp(p1, p2, progress)
+     * 
+     * 2. 进度更新：根据车速和时间增量更新行驶进度
+     *    - progress += speed * delta * 速度系数
+     *    - 当 progress >= 1 时，切换到下一路段
+     * 
+     * 3. 朝向计算：根据路径方向计算车辆旋转角度
+     *    - 方向向量 dir = p2 - p1
+     *    - 基础旋转角 = atan2(dir.x, dir.z) (从+Z轴到dir的角度)
+     *    - 加上 PI/2 偏移，因为车辆模型默认朝向+X轴
+     *    - 最终 rotation.y = atan2(dir.x, dir.z) + PI/2
+     * 
+     * 4. 交通规则：
+     *    - 检测前方交通信号灯状态
+     *    - 检测与前车的安全距离
+     *    - 需要停车时减速，无需停车时加速
+     * 
+     * 关键变量说明：
+     * - safeDistance: 车辆之间保持的最小安全距离
+     * - shouldStop: 是否需要停车的标志位
+     * - data.progress: 当前路段行驶进度(0-1)
+     * - data.pathPointIndex: 当前所在路径点的索引
+     * - data.currentSpeed: 当前行驶速度
+     * - data.baseSpeed: 车辆正常行驶的基准速度
+     */
     updateVehicles(time, delta) {
         const safeDistance = 5;
         
@@ -748,7 +858,7 @@ class TrafficSystem {
                 
                 const dir = new THREE.Vector3().subVectors(currentP2, currentP1).normalize();
                 if (dir.length() > 0.1) {
-                    const targetRot = Math.atan2(dir.x, dir.z);
+                    const targetRot = Math.atan2(dir.x, dir.z) + Math.PI / 2;
                     vehicle.rotation.y = targetRot;
                 }
                 
