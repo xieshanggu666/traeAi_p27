@@ -1727,14 +1727,15 @@ class ParkScene {
 
     createCharacters() {
         const characters = [
-            { x: -5, z: 38, r: Math.PI, create: this.createElderlyMan.bind(this) },
-            { x: 32, z: 28, r: -Math.PI / 2, create: this.createChild.bind(this) },
-            { x: -10, z: 5, r: Math.PI / 4, create: this.createAuntie.bind(this) },
-            { x: 15, z: -15, r: 0, create: this.createAuntie.bind(this) }
+            { x: -5, z: 38, r: Math.PI, create: this.createElderlyMan.bind(this), type: 'elderly' },
+            { x: 32, z: 28, r: -Math.PI / 2, create: this.createChild.bind(this), type: 'child' },
+            { x: -10, z: 5, r: Math.PI / 4, create: this.createAuntie.bind(this), type: 'adult' },
+            { x: 15, z: -15, r: 0, create: this.createAuntie.bind(this), type: 'adult' }
         ];
         
         characters.forEach(char => {
             const character = char.create(char.x, char.z, char.r);
+            this.initializeCharacterAI(character, char.type);
             this.characters.push(character);
             this.scene.add(character);
         });
@@ -1742,15 +1743,16 @@ class ParkScene {
 
     createAnimals() {
         const animals = [
-            { x: -3, z: 37, r: Math.PI, create: this.createDog.bind(this) },
-            { x: 10, z: -12, r: Math.PI / 2, create: this.createCat.bind(this) },
-            { x: 5, z: -8, r: 0, create: this.createPigeon.bind(this) },
-            { x: 8, z: -5, r: Math.PI, create: this.createPigeon.bind(this) },
-            { x: 2, z: -10, r: -Math.PI / 4, create: this.createPigeon.bind(this) }
+            { x: -3, z: 37, r: Math.PI, create: this.createDog.bind(this), type: 'dog' },
+            { x: 10, z: -12, r: Math.PI / 2, create: this.createCat.bind(this), type: 'cat' },
+            { x: 5, z: -8, r: 0, create: this.createPigeon.bind(this), type: 'pigeon' },
+            { x: 8, z: -5, r: Math.PI, create: this.createPigeon.bind(this), type: 'pigeon' },
+            { x: 2, z: -10, r: -Math.PI / 4, create: this.createPigeon.bind(this), type: 'pigeon' }
         ];
         
         animals.forEach(anim => {
             const animal = anim.create(anim.x, anim.z, anim.r);
+            this.initializeAnimalAI(animal, anim.type);
             this.animals.push(animal);
             this.scene.add(animal);
         });
@@ -2663,34 +2665,162 @@ class ParkScene {
     }
 
     setupKeyboardControls() {
-        window.addEventListener('keydown', (e) => {
-            this.keys[e.code] = true;
-            if (e.code === 'Tab') {
-                e.preventDefault();
-                this.switchControlledCharacter();
-            }
-        });
-        
-        window.addEventListener('keyup', (e) => {
-            this.keys[e.code] = false;
-        });
-        
-        if (this.characters.length > 0) {
-            this.controlledCharacter = this.characters[1];
-            console.log('🎮 键盘控制已启用，按WASD移动角色，Tab切换角色');
-        }
+        console.log('🤖 自主运动模式已启用，角色将自动随机移动');
     }
 
-    switchControlledCharacter() {
-        const allControllables = [...this.characters, ...this.animals];
-        if (allControllables.length === 0) return;
+    initializeCharacterAI(character, type) {
+        character.userData.ai = {
+            targetX: character.position.x,
+            targetZ: character.position.z,
+            stateTimer: Math.random() * 5,
+            currentState: 'idle',
+            moveSpeed: type === 'child' ? 1.5 : type === 'elderly' ? 0.6 : 0.8,
+            turnSpeed: 2,
+            wanderRadius: 8,
+            idleTime: 2 + Math.random() * 4,
+            moveTime: 3 + Math.random() * 5,
+            pauseChance: 0.3,
+            lookAroundTimer: 0,
+            lookDirection: 0
+        };
+    }
+
+    initializeAnimalAI(animal, type) {
+        animal.userData.ai = {
+            targetX: animal.position.x,
+            targetZ: animal.position.z,
+            stateTimer: Math.random() * 3,
+            currentState: 'idle',
+            moveSpeed: type === 'dog' ? 2 : type === 'cat' ? 1 : 0.8,
+            turnSpeed: type === 'pigeon' ? 4 : 3,
+            wanderRadius: type === 'pigeon' ? 3 : 6,
+            idleTime: 3 + Math.random() * 5,
+            moveTime: 2 + Math.random() * 4,
+            pauseChance: type === 'cat' ? 0.5 : 0.3,
+            followCharacter: type === 'dog' ? this.characters[0] : null,
+            followDistance: 2
+        };
+    }
+
+    generateNewTarget(character) {
+        const ai = character.userData.ai;
+        const currentX = character.position.x;
+        const currentZ = character.position.z;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * ai.wanderRadius;
         
-        const currentIndex = allControllables.indexOf(this.controlledCharacter);
-        const nextIndex = (currentIndex + 1) % allControllables.length;
-        this.controlledCharacter = allControllables[nextIndex];
+        let newX = currentX + Math.cos(angle) * distance;
+        let newZ = currentZ + Math.sin(angle) * distance;
         
-        const name = this.controlledCharacter.userData.name || '未知角色';
-        console.log(`🎯 已切换控制: ${name}`);
+        const boundary = this.PARK_SIZE / 2 - 5;
+        newX = Math.max(-boundary, Math.min(boundary, newX));
+        newZ = Math.max(-boundary, Math.min(boundary, newZ));
+        
+        ai.targetX = newX;
+        ai.targetZ = newZ;
+    }
+
+    updateCharacterAI(character, delta) {
+        const ai = character.userData.ai;
+        if (!ai) return { isMoving: false, direction: 'forward' };
+        
+        ai.stateTimer -= delta;
+        
+        const dx = ai.targetX - character.position.x;
+        const dz = ai.targetZ - character.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        if (ai.currentState === 'idle') {
+            if (ai.stateTimer <= 0) {
+                if (Math.random() > ai.pauseChance) {
+                    this.generateNewTarget(character);
+                    ai.currentState = 'walking';
+                    ai.stateTimer = ai.moveTime;
+                } else {
+                    ai.stateTimer = ai.idleTime * 0.5;
+                }
+            }
+        } else if (ai.currentState === 'walking') {
+            if (distance < 0.3 || ai.stateTimer <= 0) {
+                ai.currentState = 'idle';
+                ai.stateTimer = ai.idleTime;
+            } else {
+                const targetAngle = Math.atan2(dx, dz);
+                let angleDiff = targetAngle - character.rotation.y;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                character.rotation.y += angleDiff * ai.turnSpeed * delta;
+                
+                const moveAmount = ai.moveSpeed * delta;
+                character.position.x += Math.sin(character.rotation.y) * moveAmount;
+                character.position.z += Math.cos(character.rotation.y) * moveAmount;
+            }
+        }
+        
+        return {
+            isMoving: ai.currentState === 'walking',
+            direction: 'forward'
+        };
+    }
+
+    updateAnimalAI(animal, delta) {
+        const ai = animal.userData.ai;
+        if (!ai) return { isMoving: false, isFlying: false };
+        
+        ai.stateTimer -= delta;
+        
+        if (ai.followCharacter && ai.currentState === 'walking') {
+            const followTarget = ai.followCharacter;
+            const dx = followTarget.position.x - animal.position.x;
+            const dz = followTarget.position.z - animal.position.z;
+            const distance = Math.sqrt(dx * dx + dz * dz);
+            
+            if (distance > ai.followDistance + 1) {
+                ai.targetX = followTarget.position.x;
+                ai.targetZ = followTarget.position.z;
+            } else if (distance < ai.followDistance) {
+                ai.currentState = 'idle';
+                ai.stateTimer = ai.idleTime;
+            }
+        }
+        
+        const dx = ai.targetX - animal.position.x;
+        const dz = ai.targetZ - animal.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        
+        if (ai.currentState === 'idle') {
+            if (ai.stateTimer <= 0) {
+                if (Math.random() > ai.pauseChance) {
+                    this.generateNewTarget(animal);
+                    ai.currentState = 'walking';
+                    ai.stateTimer = ai.moveTime;
+                } else {
+                    ai.stateTimer = ai.idleTime * 0.6;
+                }
+            }
+        } else if (ai.currentState === 'walking') {
+            if (distance < 0.3 || ai.stateTimer <= 0) {
+                ai.currentState = 'idle';
+                ai.stateTimer = ai.idleTime;
+            } else {
+                const targetAngle = Math.atan2(dx, dz);
+                let angleDiff = targetAngle - animal.rotation.y;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                
+                animal.rotation.y += angleDiff * ai.turnSpeed * delta;
+                
+                const moveAmount = ai.moveSpeed * delta;
+                animal.position.x += Math.sin(animal.rotation.y) * moveAmount;
+                animal.position.z += Math.cos(animal.rotation.y) * moveAmount;
+            }
+        }
+        
+        return {
+            isMoving: ai.currentState === 'walking',
+            isFlying: false
+        };
     }
 
     createAnimationStateMachine() {
@@ -2921,34 +3051,14 @@ class ParkScene {
         
         if (!state || !bones) return;
         
-        let isMoving = false;
-        let moveDirection = 'forward';
-        let moveX = 0;
-        let moveZ = 0;
+        const aiResult = this.updateCharacterAI(character, delta);
+        const isMoving = aiResult.isMoving;
+        const moveDirection = aiResult.direction;
         
-        if (character === this.controlledCharacter) {
-            if (this.keys['KeyW']) { moveZ = -1; isMoving = true; moveDirection = 'forward'; }
-            if (this.keys['KeyS']) { moveZ = 1; isMoving = true; moveDirection = 'backward'; }
-            if (this.keys['KeyA']) { moveX = -1; isMoving = true; moveDirection = 'left'; }
-            if (this.keys['KeyD']) { moveX = 1; isMoving = true; moveDirection = 'right'; }
-            if (this.keys['ShiftLeft'] && isMoving) {
-                state.setState('run', moveDirection);
-            } else if (isMoving) {
-                state.setState('walk', moveDirection);
-            }
-            
-            if (moveX !== 0 || moveZ !== 0) {
-                const angle = Math.atan2(moveX, moveZ);
-                const targetRotation = angle;
-                character.rotation.y += (targetRotation - character.rotation.y) * delta * 10;
-                
-                const speed = state.currentState === 'run' ? 3 : 1.5;
-                character.position.x += Math.sin(targetRotation) * speed * delta;
-                character.position.z += Math.cos(targetRotation) * speed * delta;
-                
-                character.position.x = Math.max(-this.PARK_SIZE / 2 + 2, Math.min(this.PARK_SIZE / 2 - 2, character.position.x));
-                character.position.z = Math.max(-this.PARK_SIZE / 2 + 2, Math.min(this.PARK_SIZE / 2 - 2, character.position.z));
-            }
+        if (isMoving) {
+            state.setState('walk', moveDirection);
+        } else {
+            state.setState('idle', moveDirection);
         }
         
         state.update(delta, isMoving, moveDirection);
@@ -3004,25 +3114,19 @@ class ParkScene {
         
         if (!state || !bones) return;
         
-        let isMoving = false;
-        let moveDirection = 'forward';
+        const aiResult = this.updateAnimalAI(animal, delta);
+        const isMoving = aiResult.isMoving;
+        const moveDirection = 'forward';
         
-        if (animal === this.controlledCharacter) {
-            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
-                isMoving = true;
-            }
-            if (this.keys['ShiftLeft'] && isMoving) {
-                state.setState('run', moveDirection);
-            } else if (isMoving) {
-                state.setState('walk', moveDirection);
-            }
-        }
-        
-        if (!isMoving && Math.random() < 0.001) {
-            if (state.currentState === 'idle') {
-                state.setState('rest');
-            } else if (state.currentState === 'rest' && Math.random() < 0.01) {
-                state.setState('idle');
+        if (isMoving) {
+            state.setState('walk', moveDirection);
+        } else {
+            if (Math.random() < 0.001) {
+                if (state.currentState === 'idle') {
+                    state.setState('rest');
+                } else if (state.currentState === 'rest' && Math.random() < 0.01) {
+                    state.setState('idle');
+                }
             }
         }
         
@@ -3090,19 +3194,18 @@ class ParkScene {
         
         if (!state || !bones) return;
         
-        let isMoving = false;
+        const aiResult = this.updateAnimalAI(animal, delta);
+        const isMoving = aiResult.isMoving;
         
-        if (animal === this.controlledCharacter) {
-            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
-                isMoving = true;
-            }
-        }
-        
-        if (!isMoving && Math.random() < 0.002) {
-            if (state.currentState === 'idle') {
-                state.setState('rest');
-            } else if (state.currentState === 'rest' && Math.random() < 0.005) {
-                state.setState('idle');
+        if (isMoving) {
+            state.setState('walk', 'forward');
+        } else {
+            if (Math.random() < 0.002) {
+                if (state.currentState === 'idle') {
+                    state.setState('rest');
+                } else if (state.currentState === 'rest' && Math.random() < 0.005) {
+                    state.setState('idle');
+                }
             }
         }
         
@@ -3157,20 +3260,23 @@ class ParkScene {
         
         if (!state || !bones) return;
         
-        let isMoving = false;
+        const aiResult = this.updateAnimalAI(animal, delta);
+        let isMoving = aiResult.isMoving;
         let isFlying = false;
         
-        if (animal === this.controlledCharacter) {
-            if (this.keys['KeyW'] || this.keys['KeyS'] || this.keys['KeyA'] || this.keys['KeyD']) {
-                isMoving = true;
-            }
-            if (this.keys['Space']) {
-                isFlying = true;
-                state.setState('fly');
-            }
+        if (state.currentState !== 'fly' && Math.random() < 0.0005) {
+            isFlying = true;
+            state.setState('fly');
+            animal.userData.ai.stateTimer = 3 + Math.random() * 4;
         }
         
-        if (!isFlying && !isMoving && Math.random() < 0.005) {
+        if (state.currentState === 'fly') {
+            isFlying = true;
+            if (animal.userData.ai.stateTimer <= 0) {
+                state.setState('idle');
+                animal.userData.ai.stateTimer = animal.userData.ai.idleTime;
+            }
+        } else if (!isFlying && !isMoving && Math.random() < 0.005) {
             if (state.currentState === 'idle') {
                 state.setState('rest');
             } else if (state.currentState === 'rest' && Math.random() < 0.02) {
@@ -3180,7 +3286,7 @@ class ParkScene {
         
         if (isFlying) {
             state.setState('fly');
-        } else if (isMoving && state.currentState !== 'fly') {
+        } else if (isMoving && state.currentState !== 'fly' && state.currentState !== 'rest') {
             state.setState('walk');
         } else if (!isMoving && state.currentState === 'walk') {
             state.setState('idle');
@@ -3435,6 +3541,7 @@ window.addEventListener('load', () => {
     }, 3000);
     
     window.parkScene = parkScene;
+    console.log('🤖 自主运动模式已启用');
     console.log('💡 提示: 在控制台输入 parkScene.runAnimationTests() 运行动画测试');
-    console.log('🎮 控制说明: WASD移动 | Shift奔跑 | Tab切换角色 | 空格(鸽子)飞行');
+    console.log('👥 所有角色将自动随机移动，狗会跟随主人');
 });
