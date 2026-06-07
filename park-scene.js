@@ -11,7 +11,12 @@ class ParkScene {
         this.animationId = null;
         this.characters = [];
         this.animals = [];
+        this.shops = [];
+        this.customers = [];
         this.trafficSystem = null;
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.infoPopup = null;
         
         this.PARK_SIZE = 120;
         this.GROUND_SIZE = 200;
@@ -58,6 +63,12 @@ class ParkScene {
             
             this.createAnimals();
             console.log('✓ 动物角色创建完成');
+            
+            this.createShops();
+            console.log('✓ 商铺建筑创建完成');
+            
+            this.createCustomers();
+            console.log('✓ 客户角色创建完成');
             
             this.trafficSystem = new TrafficSystem(this.scene, this.PARK_SIZE, this.GROUND_SIZE);
             this.trafficSystem.createRoadNetwork();
@@ -1419,6 +1430,662 @@ class ParkScene {
         });
     }
 
+    createSignboard(text, bgColor, textColor) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, 256, 128);
+        
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, 252, 124);
+        
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 128, 64);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+
+    createConvenienceStore(x, z, rotation = 0) {
+        const shopGroup = new THREE.Group();
+        
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x4ECDC4, roughness: 0.7 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0xFF6B6B, roughness: 0.6 });
+        const windowMat = new THREE.MeshStandardMaterial({ 
+            color: 0x87CEEB, 
+            transparent: true, 
+            opacity: 0.7, 
+            roughness: 0.1, 
+            metalness: 0.3 
+        });
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.BoxGeometry(12, 4, 8);
+        const body = new THREE.Mesh(bodyGeo, wallMat);
+        body.position.y = 2;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        shopGroup.add(body);
+        
+        const roofGeo = new THREE.BoxGeometry(14, 0.5, 10);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = 4.25;
+        roof.castShadow = true;
+        shopGroup.add(roof);
+        
+        const windowGeo = new THREE.BoxGeometry(3, 2, 0.1);
+        const windowPositions = [
+            [-3.5, 2.5, 4.06], [0, 2.5, 4.06], [3.5, 2.5, 4.06],
+            [-3.5, 2.5, -4.06], [0, 2.5, -4.06], [3.5, 2.5, -4.06]
+        ];
+        windowPositions.forEach(pos => {
+            const window = new THREE.Mesh(windowGeo, windowMat);
+            window.position.set(pos[0], pos[1], pos[2]);
+            shopGroup.add(window);
+        });
+        
+        const doorGeo = new THREE.BoxGeometry(2, 3, 0.15);
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(0, 1.5, 4.08);
+        shopGroup.add(door);
+        
+        const signTexture = this.createSignboard('24h便利店', '#FF6B6B', '#FFFFFF');
+        const signGeo = new THREE.PlaneGeometry(5, 2.5);
+        const signMat = new THREE.MeshStandardMaterial({ 
+            map: signTexture, 
+            side: THREE.DoubleSide,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 0.2
+        });
+        const sign = new THREE.Mesh(signGeo, signMat);
+        sign.position.set(0, 5.5, 4.1);
+        shopGroup.add(sign);
+        
+        const lightGeo = new THREE.SphereGeometry(0.3, 16, 16);
+        const lightMat = new THREE.MeshStandardMaterial({
+            color: 0xFFFFAA,
+            emissive: 0xFFFFAA,
+            emissiveIntensity: 0.8
+        });
+        const light1 = new THREE.Mesh(lightGeo, lightMat);
+        light1.position.set(-4, 4.5, 3.5);
+        shopGroup.add(light1);
+        const light2 = light1.clone();
+        light2.position.set(4, 4.5, 3.5);
+        shopGroup.add(light2);
+        
+        const pointLight1 = new THREE.PointLight(0xFFFACD, 0.6, 20);
+        pointLight1.position.set(-4, 4, 3.5);
+        shopGroup.add(pointLight1);
+        const pointLight2 = pointLight1.clone();
+        pointLight2.position.set(4, 4, 3.5);
+        shopGroup.add(pointLight2);
+        
+        shopGroup.position.set(x, 0, z);
+        shopGroup.rotation.y = rotation;
+        shopGroup.userData = {
+            type: 'shop',
+            name: '24h便利店',
+            description: '全天24小时营业，提供日用品、零食、饮料等',
+            openTime: '00:00 - 24:00',
+            category: '便利店'
+        };
+        return shopGroup;
+    }
+
+    createCoffeeShop(x, z, rotation = 0) {
+        const shopGroup = new THREE.Group();
+        
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.8 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.7 });
+        const windowMat = new THREE.MeshStandardMaterial({ 
+            color: 0xB0E0E6, 
+            transparent: true, 
+            opacity: 0.7, 
+            roughness: 0.1 
+        });
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0xDEB887, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.BoxGeometry(10, 3.5, 9);
+        const body = new THREE.Mesh(bodyGeo, wallMat);
+        body.position.y = 1.75;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        shopGroup.add(body);
+        
+        const roofGeo = new THREE.ConeGeometry(8, 2.5, 4);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = 4.75;
+        roof.rotation.y = Math.PI / 4;
+        roof.castShadow = true;
+        shopGroup.add(roof);
+        
+        const windowGeo = new THREE.BoxGeometry(2.5, 1.8, 0.1);
+        const windowPositions = [
+            [-2.5, 2.5, 4.56], [2.5, 2.5, 4.56],
+            [-2.5, 2.5, -4.56], [2.5, 2.5, -4.56]
+        ];
+        windowPositions.forEach(pos => {
+            const window = new THREE.Mesh(windowGeo, windowMat);
+            window.position.set(pos[0], pos[1], pos[2]);
+            shopGroup.add(window);
+        });
+        
+        const doorGeo = new THREE.BoxGeometry(1.8, 2.8, 0.15);
+        const door = new THREE.Mesh(doorGeo, woodMat);
+        door.position.set(0, 1.4, 4.58);
+        shopGroup.add(door);
+        
+        const signTexture = this.createSignboard('咖啡屋', '#8B4513', '#FFD700');
+        const signGeo = new THREE.PlaneGeometry(4, 2);
+        const signMat = new THREE.MeshStandardMaterial({ 
+            map: signTexture, 
+            side: THREE.DoubleSide,
+            emissive: 0xFFD700,
+            emissiveIntensity: 0.15
+        });
+        const sign = new THREE.Mesh(signGeo, signMat);
+        sign.position.set(0, 5.8, 0);
+        sign.rotation.y = Math.PI / 2;
+        shopGroup.add(sign);
+        
+        const umbrellaGeo = new THREE.ConeGeometry(2, 0.8, 8);
+        const umbrellaMat = new THREE.MeshStandardMaterial({ color: 0xFF6347, roughness: 0.6 });
+        const umbrella = new THREE.Mesh(umbrellaGeo, umbrellaMat);
+        umbrella.position.set(-5, 3, 3);
+        umbrella.castShadow = true;
+        shopGroup.add(umbrella);
+        
+        const poleGeo = new THREE.CylinderGeometry(0.05, 0.05, 3, 8);
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x808080 });
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        pole.position.set(-5, 1.5, 3);
+        shopGroup.add(pole);
+        
+        const umbrella2 = umbrella.clone();
+        umbrella2.position.set(5, 3, 3);
+        umbrella2.material.color.setHex(0x4169E1);
+        shopGroup.add(umbrella2);
+        const pole2 = pole.clone();
+        pole2.position.set(5, 1.5, 3);
+        shopGroup.add(pole2);
+        
+        shopGroup.position.set(x, 0, z);
+        shopGroup.rotation.y = rotation;
+        shopGroup.userData = {
+            type: 'shop',
+            name: '阳光咖啡屋',
+            description: '提供精品咖啡、甜点、轻食，环境优雅舒适',
+            openTime: '07:00 - 22:00',
+            category: '咖啡厅'
+        };
+        return shopGroup;
+    }
+
+    createBookstore(x, z, rotation = 0) {
+        const shopGroup = new THREE.Group();
+        
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xFAEBD7, roughness: 0.7 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x2F4F4F, roughness: 0.6 });
+        const windowMat = new THREE.MeshStandardMaterial({ 
+            color: 0xADD8E6, 
+            transparent: true, 
+            opacity: 0.7, 
+            roughness: 0.1 
+        });
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.BoxGeometry(11, 4.5, 8.5);
+        const body = new THREE.Mesh(bodyGeo, wallMat);
+        body.position.y = 2.25;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        shopGroup.add(body);
+        
+        const roofGeo = new THREE.BoxGeometry(13, 0.6, 10.5);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = 4.8;
+        roof.castShadow = true;
+        shopGroup.add(roof);
+        
+        const windowGeo = new THREE.BoxGeometry(2, 2.5, 0.1);
+        const windowPositions = [
+            [-3, 3, 4.31], [3, 3, 4.31],
+            [-3, 3, -4.31], [3, 3, -4.31]
+        ];
+        windowPositions.forEach(pos => {
+            const window = new THREE.Mesh(windowGeo, windowMat);
+            window.position.set(pos[0], pos[1], pos[2]);
+            shopGroup.add(window);
+        });
+        
+        const doorGeo = new THREE.BoxGeometry(2.2, 3.5, 0.15);
+        const door = new THREE.Mesh(doorGeo, woodMat);
+        door.position.set(0, 1.75, 4.33);
+        shopGroup.add(door);
+        
+        const signTexture = this.createSignboard('书香阁', '#2F4F4F', '#FFD700');
+        const signGeo = new THREE.PlaneGeometry(4.5, 2);
+        const signMat = new THREE.MeshStandardMaterial({ 
+            map: signTexture, 
+            side: THREE.DoubleSide 
+        });
+        const sign = new THREE.Mesh(signGeo, signMat);
+        sign.position.set(0, 6, 4.35);
+        shopGroup.add(sign);
+        
+        const bookshelfGeo = new THREE.BoxGeometry(0.8, 2.5, 0.3);
+        const bookshelfMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+        const bookColors = [0xE74C3C, 0x3498DB, 0x2ECC71, 0xF39C12, 0x9B59B6, 0x1ABC9C];
+        for (let i = 0; i < 3; i++) {
+            const shelf = new THREE.Mesh(bookshelfGeo, bookshelfMat);
+            shelf.position.set(-4.5 + i * 4.5, 2, 3.8);
+            shopGroup.add(shelf);
+            
+            for (let j = 0; j < 6; j++) {
+                const bookGeo = new THREE.BoxGeometry(0.1, 0.4, 0.25);
+                const bookMat = new THREE.MeshStandardMaterial({ 
+                    color: bookColors[(i + j) % bookColors.length] 
+                });
+                const book = new THREE.Mesh(bookGeo, bookMat);
+                book.position.set(-4.5 + i * 4.5 - 0.2 + (j % 3) * 0.2, 1.2 + Math.floor(j / 3) * 0.8, 3.95);
+                shopGroup.add(book);
+            }
+        }
+        
+        shopGroup.position.set(x, 0, z);
+        shopGroup.rotation.y = rotation;
+        shopGroup.userData = {
+            type: 'shop',
+            name: '书香阁书店',
+            description: '各类图书、文具、文创产品，设有阅读区',
+            openTime: '09:00 - 21:00',
+            category: '书店'
+        };
+        return shopGroup;
+    }
+
+    createFlowerShop(x, z, rotation = 0) {
+        const shopGroup = new THREE.Group();
+        
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xFFE4E1, roughness: 0.7 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0xFF69B4, roughness: 0.6 });
+        const windowMat = new THREE.MeshStandardMaterial({ 
+            color: 0xE0FFFF, 
+            transparent: true, 
+            opacity: 0.7, 
+            roughness: 0.1 
+        });
+        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xFFB6C1, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.BoxGeometry(9, 3.5, 7);
+        const body = new THREE.Mesh(bodyGeo, wallMat);
+        body.position.y = 1.75;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        shopGroup.add(body);
+        
+        const roofGeo = new THREE.ConeGeometry(7, 2, 6);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = 4.5;
+        roof.rotation.y = Math.PI / 6;
+        roof.castShadow = true;
+        shopGroup.add(roof);
+        
+        const windowGeo = new THREE.BoxGeometry(2.2, 1.6, 0.1);
+        const windowPositions = [
+            [-2, 2.5, 3.56], [2, 2.5, 3.56]
+        ];
+        windowPositions.forEach(pos => {
+            const window = new THREE.Mesh(windowGeo, windowMat);
+            window.position.set(pos[0], pos[1], pos[2]);
+            shopGroup.add(window);
+        });
+        
+        const doorGeo = new THREE.BoxGeometry(1.6, 2.8, 0.15);
+        const door = new THREE.Mesh(doorGeo, pinkMat);
+        door.position.set(0, 1.4, 3.58);
+        shopGroup.add(door);
+        
+        const signTexture = this.createSignboard('花语轩', '#FF69B4', '#FFFFFF');
+        const signGeo = new THREE.PlaneGeometry(3.5, 1.8);
+        const signMat = new THREE.MeshStandardMaterial({ 
+            map: signTexture, 
+            side: THREE.DoubleSide,
+            emissive: 0xFF69B4,
+            emissiveIntensity: 0.1
+        });
+        const sign = new THREE.Mesh(signGeo, signMat);
+        sign.position.set(0, 5.5, 3.6);
+        shopGroup.add(sign);
+        
+        const flowerColors = [0xFF69B4, 0xFF6347, 0xFFD700, 0x9370DB, 0x00CED1, 0xFF1493];
+        for (let i = 0; i < 8; i++) {
+            const potGeo = new THREE.CylinderGeometry(0.25, 0.2, 0.3, 8);
+            const potMat = new THREE.MeshStandardMaterial({ color: 0xCD853F });
+            const pot = new THREE.Mesh(potGeo, potMat);
+            const angle = (i / 8) * Math.PI * 2;
+            const radius = 5;
+            pot.position.set(
+                x + Math.cos(angle) * radius,
+                0.15,
+                z + Math.sin(angle) * radius
+            );
+            pot.castShadow = true;
+            this.scene.add(pot);
+            
+            for (let j = 0; j < 5; j++) {
+                const flowerGeo = new THREE.SphereGeometry(0.1, 8, 8);
+                const flowerMat = new THREE.MeshStandardMaterial({ 
+                    color: flowerColors[(i + j) % flowerColors.length],
+                    emissive: flowerColors[(i + j) % flowerColors.length],
+                    emissiveIntensity: 0.1
+                });
+                const flower = new THREE.Mesh(flowerGeo, flowerMat);
+                flower.position.set(
+                    x + Math.cos(angle) * radius + (Math.random() - 0.5) * 0.3,
+                    0.5 + Math.random() * 0.3,
+                    z + Math.sin(angle) * radius + (Math.random() - 0.5) * 0.3
+                );
+                this.scene.add(flower);
+            }
+        }
+        
+        shopGroup.position.set(x, 0, z);
+        shopGroup.rotation.y = rotation;
+        shopGroup.userData = {
+            type: 'shop',
+            name: '花语轩花店',
+            description: '鲜花、花束、盆栽、园艺用品，承接花艺定制',
+            openTime: '08:00 - 20:00',
+            category: '花店'
+        };
+        return shopGroup;
+    }
+
+    createIceCreamShop(x, z, rotation = 0) {
+        const shopGroup = new THREE.Group();
+        
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0xE0FFFF, roughness: 0.7 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x87CEEB, roughness: 0.6 });
+        const windowMat = new THREE.MeshStandardMaterial({ 
+            color: 0xADD8E6, 
+            transparent: true, 
+            opacity: 0.7, 
+            roughness: 0.1 
+        });
+        const whiteMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+        
+        const bodyGeo = new THREE.BoxGeometry(8, 3, 7);
+        const body = new THREE.Mesh(bodyGeo, wallMat);
+        body.position.y = 1.5;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        shopGroup.add(body);
+        
+        const roofGeo = new THREE.SphereGeometry(5, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.y = 3;
+        roof.castShadow = true;
+        shopGroup.add(roof);
+        
+        const windowGeo = new THREE.BoxGeometry(2, 1.5, 0.1);
+        const windowPositions = [
+            [-1.8, 2.2, 3.56], [1.8, 2.2, 3.56]
+        ];
+        windowPositions.forEach(pos => {
+            const window = new THREE.Mesh(windowGeo, windowMat);
+            window.position.set(pos[0], pos[1], pos[2]);
+            shopGroup.add(window);
+        });
+        
+        const doorGeo = new THREE.BoxGeometry(1.5, 2.4, 0.15);
+        const door = new THREE.Mesh(doorGeo, whiteMat);
+        door.position.set(0, 1.2, 3.58);
+        shopGroup.add(door);
+        
+        const signTexture = this.createSignboard('冰淇淋店', '#87CEEB', '#FF69B4');
+        const signGeo = new THREE.PlaneGeometry(3.5, 1.5);
+        const signMat = new THREE.MeshStandardMaterial({ 
+            map: signTexture, 
+            side: THREE.DoubleSide 
+        });
+        const sign = new THREE.Mesh(signGeo, signMat);
+        sign.position.set(0, 6, 3.6);
+        shopGroup.add(sign);
+        
+        const coneGeo = new THREE.ConeGeometry(0.3, 1, 8);
+        const coneMat = new THREE.MeshStandardMaterial({ color: 0xDEB887 });
+        const iceCreamColors = [0xFF69B4, 0x8B4513, 0x90EE90, 0xFFFF00, 0xFF6347];
+        
+        for (let i = 0; i < 3; i++) {
+            const cone = new THREE.Mesh(coneGeo, coneMat);
+            cone.position.set(-3 + i * 3, 5.5, 2);
+            cone.rotation.x = Math.PI;
+            shopGroup.add(cone);
+            
+            const scoopGeo = new THREE.SphereGeometry(0.35, 16, 16);
+            const scoopMat = new THREE.MeshStandardMaterial({ 
+                color: iceCreamColors[i],
+                roughness: 0.4
+            });
+            const scoop = new THREE.Mesh(scoopGeo, scoopMat);
+            scoop.position.set(-3 + i * 3, 5, 2);
+            shopGroup.add(scoop);
+        }
+        
+        shopGroup.position.set(x, 0, z);
+        shopGroup.rotation.y = rotation;
+        shopGroup.userData = {
+            type: 'shop',
+            name: '梦幻冰淇淋店',
+            description: '各种口味冰淇淋、冷饮、甜品，夏日消暑好去处',
+            openTime: '10:00 - 22:00',
+            category: '甜品店'
+        };
+        return shopGroup;
+    }
+
+    createShops() {
+        const shopConfigs = [
+            { x: 80, z: 0, r: Math.PI, create: this.createConvenienceStore.bind(this) },
+            { x: -80, z: 0, r: 0, create: this.createBookstore.bind(this) },
+            { x: 0, z: 80, r: Math.PI, create: this.createCoffeeShop.bind(this) },
+            { x: 0, z: -80, r: 0, create: this.createFlowerShop.bind(this) },
+            { x: 60, z: 60, r: -Math.PI * 3 / 4, create: this.createIceCreamShop.bind(this) }
+        ];
+        
+        shopConfigs.forEach(config => {
+            const shop = config.create(config.x, config.z, config.r);
+            this.shops.push(shop);
+            this.scene.add(shop);
+        });
+    }
+
+    createShopper(x, z, rotation = 0, type = 'adult') {
+        const personGroup = new THREE.Group();
+        
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xFFD5B5, roughness: 0.8 });
+        
+        let bodyColor, pantsColor, hairColor, heightScale;
+        
+        if (type === 'adult') {
+            bodyColor = 0x3498DB;
+            pantsColor = 0x2C3E50;
+            hairColor = 0x2C1810;
+            heightScale = 1;
+        } else if (type === 'woman') {
+            bodyColor = 0xE91E63;
+            pantsColor = 0x8B4513;
+            hairColor = 0x1C1C1C;
+            heightScale = 0.95;
+        } else if (type === 'teen') {
+            bodyColor = 0x9C27B0;
+            pantsColor = 0x34495E;
+            hairColor = 0x4A235A;
+            heightScale = 0.85;
+        } else {
+            bodyColor = 0xFF9800;
+            pantsColor = 0x795548;
+            hairColor = 0x2C1810;
+            heightScale = 0.7;
+        }
+        
+        const shirtMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.7 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.8 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.9 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2C2C2C, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.22 * heightScale, 0.28 * heightScale, 0.75 * heightScale, 8);
+        const body = new THREE.Mesh(bodyGeo, shirtMat);
+        body.position.y = 1.0 * heightScale;
+        body.castShadow = true;
+        personGroup.add(body);
+        
+        const headGeo = new THREE.SphereGeometry(0.2 * heightScale, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.y = 1.65 * heightScale;
+        head.castShadow = true;
+        personGroup.add(head);
+        
+        const hairGeo = new THREE.SphereGeometry(0.21 * heightScale, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.y = 1.72 * heightScale;
+        personGroup.add(hair);
+        
+        if (type === 'woman') {
+            const bunGeo = new THREE.SphereGeometry(0.1 * heightScale, 12, 12);
+            const bun = new THREE.Mesh(bunGeo, hairMat);
+            bun.position.set(0, 1.85 * heightScale, -0.1 * heightScale);
+            personGroup.add(bun);
+        }
+        
+        const legGeo = new THREE.CylinderGeometry(0.07 * heightScale, 0.08 * heightScale, 0.55 * heightScale, 8);
+        const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+        leftLeg.position.set(-0.12 * heightScale, 0.38 * heightScale, 0);
+        leftLeg.castShadow = true;
+        personGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+        rightLeg.position.set(0.12 * heightScale, 0.38 * heightScale, 0);
+        rightLeg.castShadow = true;
+        personGroup.add(rightLeg);
+        
+        const shoeGeo = new THREE.BoxGeometry(0.11 * heightScale, 0.05 * heightScale, 0.18 * heightScale);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(-0.12 * heightScale, 0.05 * heightScale, 0.02 * heightScale);
+        leftShoe.castShadow = true;
+        personGroup.add(leftShoe);
+        
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0.12 * heightScale, 0.05 * heightScale, 0.02 * heightScale);
+        rightShoe.castShadow = true;
+        personGroup.add(rightShoe);
+        
+        const armGeo = new THREE.CylinderGeometry(0.05 * heightScale, 0.045 * heightScale, 0.5 * heightScale, 8);
+        const leftArm = new THREE.Mesh(armGeo, shirtMat);
+        leftArm.position.set(-0.3 * heightScale, 1.1 * heightScale, 0);
+        leftArm.rotation.z = 0.2;
+        leftArm.castShadow = true;
+        personGroup.add(leftArm);
+        
+        const rightArm = new THREE.Mesh(armGeo, shirtMat);
+        rightArm.position.set(0.3 * heightScale, 1.1 * heightScale, 0);
+        rightArm.rotation.z = -0.2;
+        rightArm.castShadow = true;
+        personGroup.add(rightArm);
+        
+        if (type === 'woman' || type === 'adult') {
+            const bagGeo = new THREE.BoxGeometry(0.2 * heightScale, 0.25 * heightScale, 0.1 * heightScale);
+            const bagMat = new THREE.MeshStandardMaterial({ color: 0xE67E22, roughness: 0.6 });
+            const bag = new THREE.Mesh(bagGeo, bagMat);
+            bag.position.set(-0.4 * heightScale, 0.8 * heightScale, 0);
+            bag.castShadow = true;
+            personGroup.add(bag);
+        }
+        
+        if (type === 'child') {
+            const balloonGeo = new THREE.SphereGeometry(0.15 * heightScale, 16, 16);
+            const balloonMat = new THREE.MeshStandardMaterial({ 
+                color: 0xFF69B4, 
+                emissive: 0xFF69B4,
+                emissiveIntensity: 0.1,
+                roughness: 0.3
+            });
+            const balloon = new THREE.Mesh(balloonGeo, balloonMat);
+            balloon.position.set(0.3 * heightScale, 2.1 * heightScale, 0);
+            balloon.castShadow = true;
+            personGroup.add(balloon);
+            
+            const stringGeo = new THREE.CylinderGeometry(0.005 * heightScale, 0.005 * heightScale, 0.5 * heightScale, 4);
+            const stringMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+            const string = new THREE.Mesh(stringGeo, stringMat);
+            string.position.set(0.28 * heightScale, 1.75 * heightScale, 0);
+            personGroup.add(string);
+        }
+        
+        personGroup.position.set(x, 0, z);
+        personGroup.rotation.y = rotation;
+        personGroup.userData = { 
+            type: 'customer', 
+            name: type === 'adult' ? '张先生' : type === 'woman' ? '李女士' : type === 'teen' ? '小王' : '小朋友',
+            walkSpeed: 0.015 + Math.random() * 0.01,
+            swayOffset: Math.random() * Math.PI * 2,
+            customerType: type,
+            targetShop: null,
+            waitTime: 0
+        };
+        return personGroup;
+    }
+
+    createCustomers() {
+        const customerTypes = ['adult', 'woman', 'teen', 'child'];
+        const customerConfigs = [];
+        
+        const shopPositions = [
+            { x: 70, z: 0, r: Math.PI },
+            { x: -70, z: 0, r: 0 },
+            { x: 0, z: 70, r: Math.PI },
+            { x: 0, z: -70, r: 0 },
+            { x: 55, z: 55, r: -Math.PI * 3 / 4 }
+        ];
+        
+        shopPositions.forEach(pos => {
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (Math.random() - 0.5) * 15;
+                const offsetZ = (Math.random() - 0.5) * 15;
+                customerConfigs.push({
+                    x: pos.x + offsetX,
+                    z: pos.z + offsetZ,
+                    r: pos.r + (Math.random() - 0.5) * 0.5,
+                    type: customerTypes[Math.floor(Math.random() * customerTypes.length)]
+                });
+            }
+        });
+        
+        for (let i = 0; i < 5; i++) {
+            customerConfigs.push({
+                x: (Math.random() - 0.5) * 160,
+                z: (Math.random() - 0.5) * 160,
+                r: Math.random() * Math.PI * 2,
+                type: customerTypes[Math.floor(Math.random() * customerTypes.length)]
+            });
+        }
+        
+        customerConfigs.forEach(config => {
+            const customer = this.createShopper(config.x, config.z, config.r, config.type);
+            this.customers.push(customer);
+            this.scene.add(customer);
+        });
+    }
+
     setCameraView(viewName) {
         this.currentView = viewName;
         
@@ -1427,6 +2094,12 @@ class ParkScene {
             landscape: { pos: new THREE.Vector3(15, 8, 25), target: new THREE.Vector3(0, 2, 0) },
             facility: { pos: new THREE.Vector3(-8, 3, 8), target: new THREE.Vector3(-20, 1, 5) },
             playground: { pos: new THREE.Vector3(40, 8, 35), target: new THREE.Vector3(30, 2, 25) },
+            shops: { pos: new THREE.Vector3(100, 60, 100), target: new THREE.Vector3(0, 0, 0) },
+            convenience: { pos: new THREE.Vector3(95, 15, 5), target: new THREE.Vector3(80, 3, 0) },
+            coffee: { pos: new THREE.Vector3(5, 15, 95), target: new THREE.Vector3(0, 3, 80) },
+            bookstore: { pos: new THREE.Vector3(-95, 15, 5), target: new THREE.Vector3(-80, 3, 0) },
+            flower: { pos: new THREE.Vector3(5, 15, -95), target: new THREE.Vector3(0, 3, -80) },
+            icecream: { pos: new THREE.Vector3(75, 15, 75), target: new THREE.Vector3(60, 3, 60) },
             free: { pos: new THREE.Vector3(50, 30, 50), target: new THREE.Vector3(0, 5, 0) }
         };
         
@@ -1528,6 +2201,106 @@ class ParkScene {
         link.click();
     }
 
+    createInfoPopup() {
+        const popup = document.createElement('div');
+        popup.id = 'shop-info-popup';
+        popup.style.cssText = `
+            position: absolute;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            max-width: 320px;
+            pointer-events: auto;
+        `;
+        popup.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 id="popup-title" style="margin: 0; color: #2c5530; font-size: 18px;">商铺名称</h3>
+                <button id="popup-close" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #666; padding: 0 5px;">×</button>
+            </div>
+            <div id="popup-category" style="display: inline-block; background: #4a7c59; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-bottom: 12px;">类别</div>
+            <p id="popup-description" style="margin: 0 0 12px 0; color: #555; line-height: 1.6; font-size: 14px;">描述内容</p>
+            <div style="display: flex; align-items: center; gap: 8px; color: #666; font-size: 13px;">
+                <span>🕐</span>
+                <span id="popup-time">营业时间: 00:00 - 24:00</span>
+            </div>
+        `;
+        document.body.appendChild(popup);
+        
+        popup.querySelector('#popup-close').addEventListener('click', () => {
+            popup.style.display = 'none';
+        });
+        
+        return popup;
+    }
+
+    showShopInfo(shop, event) {
+        const data = shop.userData;
+        
+        if (!this.infoPopup) {
+            this.infoPopup = this.createInfoPopup();
+        }
+        
+        this.infoPopup.querySelector('#popup-title').textContent = data.name;
+        this.infoPopup.querySelector('#popup-category').textContent = data.category;
+        this.infoPopup.querySelector('#popup-description').textContent = data.description;
+        this.infoPopup.querySelector('#popup-time').textContent = `营业时间: ${data.openTime}`;
+        
+        this.infoPopup.style.left = `${event.clientX + 15}px`;
+        this.infoPopup.style.top = `${event.clientY + 15}px`;
+        this.infoPopup.style.display = 'block';
+        
+        setTimeout(() => {
+            const rect = this.infoPopup.getBoundingClientRect();
+            if (rect.right > window.innerWidth) {
+                this.infoPopup.style.left = `${event.clientX - rect.width - 15}px`;
+            }
+            if (rect.bottom > window.innerHeight) {
+                this.infoPopup.style.top = `${event.clientY - rect.height - 15}px`;
+            }
+        }, 10);
+    }
+
+    onMouseClick(event) {
+        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        const allMeshes = [];
+        this.shops.forEach(shop => {
+            shop.traverse((child) => {
+                if (child.isMesh) {
+                    allMeshes.push(child);
+                }
+            });
+        });
+        
+        const intersects = this.raycaster.intersectObjects(allMeshes);
+        
+        if (intersects.length > 0) {
+            let clickedShop = null;
+            let obj = intersects[0].object;
+            
+            while (obj && !clickedShop) {
+                if (obj.userData && obj.userData.type === 'shop') {
+                    clickedShop = obj;
+                }
+                obj = obj.parent;
+            }
+            
+            if (clickedShop) {
+                this.showShopInfo(clickedShop, event);
+            } else if (this.infoPopup) {
+                this.infoPopup.style.display = 'none';
+            }
+        } else if (this.infoPopup) {
+            this.infoPopup.style.display = 'none';
+        }
+    }
+
     setupEventListeners() {
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -1556,6 +2329,10 @@ class ParkScene {
             const minutes = Math.floor((hour - hours) * 60);
             timeValue.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             this.updateTimeOfDay(hour);
+        });
+        
+        this.renderer.domElement.addEventListener('click', (e) => {
+            this.onMouseClick(e);
         });
     }
 
@@ -1610,6 +2387,48 @@ class ParkScene {
         }
     }
 
+    animateShop(shop, time) {
+        const data = shop.userData;
+        
+        shop.traverse((obj) => {
+            if (obj instanceof THREE.PointLight) {
+                obj.intensity = 0.5 + Math.sin(time * 1.5 + obj.position.x) * 0.2;
+            }
+        });
+        
+        if (data.name === '梦幻冰淇淋店') {
+            const sign = shop.children.find(c => c.geometry && c.geometry.type === 'PlaneGeometry' && c.material.map);
+            if (sign) {
+                sign.material.emissiveIntensity = 0.1 + Math.sin(time * 2) * 0.1;
+            }
+        }
+    }
+
+    animateCustomer(customer, time) {
+        const data = customer.userData;
+        const sway = Math.sin(time * 2 + data.swayOffset) * 0.015;
+        
+        customer.position.y = sway;
+        
+        const leftArm = customer.children[8];
+        const rightArm = customer.children[9];
+        const leftLeg = customer.children[4];
+        const rightLeg = customer.children[5];
+        
+        if (leftArm) leftArm.rotation.z = 0.2 + Math.sin(time * 3 + data.swayOffset) * 0.15;
+        if (rightArm) rightArm.rotation.z = -0.2 - Math.sin(time * 3 + data.swayOffset) * 0.15;
+        if (leftLeg) leftLeg.rotation.x = Math.sin(time * 3 + data.swayOffset) * 0.1;
+        if (rightLeg) rightLeg.rotation.x = -Math.sin(time * 3 + data.swayOffset) * 0.1;
+        
+        if (data.customerType === 'child') {
+            const balloon = customer.children.find(c => c.material && c.material.emissive && c.material.emissive.getHex() === 0xFF69B4);
+            if (balloon) {
+                balloon.position.y = 2.1 * 0.7 + Math.sin(time * 2 + data.swayOffset) * 0.1;
+                balloon.position.x = 0.3 * 0.7 + Math.sin(time * 1.5 + data.swayOffset) * 0.05;
+            }
+        }
+    }
+
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
         
@@ -1617,7 +2436,7 @@ class ParkScene {
         const delta = this.clock.getDelta();
         
         this.scene.traverse((obj) => {
-            if (obj instanceof THREE.PointLight) {
+            if (obj instanceof THREE.PointLight && !obj.userData.isShopLight) {
                 obj.intensity = 0.6 + Math.sin(time * 2 + obj.position.x) * 0.2;
             }
         });
@@ -1628,6 +2447,14 @@ class ParkScene {
         
         this.animals.forEach(animal => {
             this.animateAnimal(animal, time);
+        });
+        
+        this.shops.forEach(shop => {
+            this.animateShop(shop, time);
+        });
+        
+        this.customers.forEach(customer => {
+            this.animateCustomer(customer, time);
         });
         
         if (this.trafficSystem) {
