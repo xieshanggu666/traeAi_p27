@@ -246,16 +246,7 @@ class ParkScene {
     createGround() {
         const grassTexture = this.createGrassTexture();
         
-        const groundGeo = new THREE.PlaneGeometry(this.GROUND_SIZE, this.GROUND_SIZE, 100, 100);
-        const positions = groundGeo.attributes.position;
-        
-        for (let i = 0; i < positions.count; i++) {
-            const x = positions.getX(i);
-            const y = positions.getY(i);
-            const z = Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5 + Math.random() * 0.2;
-            positions.setZ(i, z);
-        }
-        groundGeo.computeVertexNormals();
+        const groundGeo = new THREE.PlaneGeometry(this.GROUND_SIZE, this.GROUND_SIZE, 1, 1);
         
         const groundMat = new THREE.MeshStandardMaterial({
             map: grassTexture,
@@ -265,6 +256,7 @@ class ParkScene {
         
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
+        ground.position.y = 0;
         ground.receiveShadow = true;
         this.scene.add(ground);
 
@@ -395,16 +387,18 @@ class ParkScene {
             metalness: 0.3
         });
         const pond = new THREE.Mesh(pondGeo, waterMat);
-        pond.position.y = -0.3;
+        pond.position.y = 0.05;
         pond.receiveShadow = true;
+        pond.renderOrder = 2;
         pondGroup.add(pond);
         
         const edgeGeo = new THREE.TorusGeometry(radius + 0.5, 0.3, 8, 32);
         const edgeMat = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.8 });
         const edge = new THREE.Mesh(edgeGeo, edgeMat);
         edge.rotation.x = Math.PI / 2;
-        edge.position.y = 0.1;
+        edge.position.y = 0.2;
         edge.castShadow = true;
+        edge.renderOrder = 3;
         pondGroup.add(edge);
         
         for (let i = 0; i < 5; i++) {
@@ -419,11 +413,12 @@ class ParkScene {
             const dist = Math.random() * (radius - 1);
             lily.position.set(
                 Math.cos(angle) * dist,
-                0.02,
+                0.15,
                 Math.sin(angle) * dist
             );
             lily.rotation.x = -Math.PI / 2;
             lily.rotation.z = Math.random() * Math.PI;
+            lily.renderOrder = 4;
             pondGroup.add(lily);
         }
         
@@ -893,46 +888,15 @@ class ParkScene {
             characterType: 'elderly'
         };
         
-        this.buildCharacterSkeleton(personGroup, 'elderly');
-        
-        const bones = personGroup.userData.bones;
-        if (bones) {
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                hair.position.set(0, 0.07, 0);
-                beard.position.set(0, -0.13, 0.15);
-                bones.head.add(head);
-                bones.head.add(hair);
-                bones.head.add(beard);
-            }
-            if (bones.chest) {
-                body.position.set(0, 0, 0);
-                body.scale.set(1, 1.1, 1);
-                bones.chest.add(body);
-            }
-            if (bones.leftArm) {
-                leftArm.position.set(0, 0, 0);
-                leftArm.rotation.set(0, 0, 0.3);
-                bones.leftArm.add(leftArm);
-            }
-            if (bones.rightArm) {
-                rightArm.position.set(0, 0, 0);
-                rightArm.rotation.set(0, 0, -0.3);
-                bones.rightArm.add(rightArm);
-            }
-            if (bones.leftLeg) {
-                leftLeg.position.set(0, 0, 0);
-                bones.leftLeg.add(leftLeg);
-                leftShoe.position.set(0, -0.3, 0.02);
-                bones.leftLeg.add(leftShoe);
-            }
-            if (bones.rightLeg) {
-                rightLeg.position.set(0, 0, 0);
-                bones.rightLeg.add(rightLeg);
-                rightShoe.position.set(0, -0.3, 0.02);
-                bones.rightLeg.add(rightShoe);
-            }
-        }
+        personGroup.userData.originalPositions = {
+            body: { y: 1.1 },
+            head: { y: 1.75 },
+            leftLeg: { y: 0.4, x: -0.12 },
+            rightLeg: { y: 0.4, x: 0.12 },
+            leftArm: { y: 1.15, x: -0.32, z: 0.3 },
+            rightArm: { y: 1.15, x: 0.32, z: -0.3 }
+        };
+        personGroup.userData.useSimpleAnimation = true;
         
         return personGroup;
     }
@@ -1039,53 +1003,15 @@ class ParkScene {
             characterType: 'child'
         };
         
-        this.buildCharacterSkeleton(personGroup, 'child');
-        
-        const bones = personGroup.userData.bones;
-        if (bones) {
-            if (bones.hips) bones.hips.scale.set(0.7, 0.7, 0.7);
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                hair.position.set(0, 0.07, 0);
-                cap.position.set(0, 0.1, 0);
-                capBrim.position.set(0, 0.03, 0.15);
-                bones.head.add(head);
-                bones.head.add(hair);
-                bones.head.add(cap);
-                bones.head.add(capBrim);
-            }
-            if (bones.chest) {
-                body.position.set(0, 0, 0);
-                body.scale.set(1, 0.8, 1);
-                bones.chest.add(body);
-            }
-            if (bones.leftArm) {
-                leftArm.position.set(0, 0, 0);
-                leftArm.rotation.set(0, 0, 0.5);
-                bones.leftArm.add(leftArm);
-            }
-            if (bones.rightArm) {
-                rightArm.position.set(0, 0, 0);
-                rightArm.rotation.set(0, 0, -0.5);
-                bones.rightArm.add(rightArm);
-                balloon.position.set(0.05, -0.1, 0.1);
-                string.position.set(0, -0.3, 0);
-                bones.rightForearm.add(balloon);
-                bones.rightForearm.add(string);
-            }
-            if (bones.leftLeg) {
-                leftLeg.position.set(0, 0, 0);
-                bones.leftLeg.add(leftLeg);
-                leftShoe.position.set(0, -0.25, 0.02);
-                bones.leftLeg.add(leftShoe);
-            }
-            if (bones.rightLeg) {
-                rightLeg.position.set(0, 0, 0);
-                bones.rightLeg.add(rightLeg);
-                rightShoe.position.set(0, -0.25, 0.02);
-                bones.rightLeg.add(rightShoe);
-            }
-        }
+        personGroup.userData.originalPositions = {
+            body: { y: 1.0 },
+            head: { y: 1.55 },
+            leftLeg: { y: 0.35, x: -0.12 },
+            rightLeg: { y: 0.35, x: 0.12 },
+            leftArm: { y: 1.0, x: -0.28, z: 0.5 },
+            rightArm: { y: 1.0, x: 0.28, z: -0.5 }
+        };
+        personGroup.userData.useSimpleAnimation = true;
         
         return personGroup;
     }
@@ -1185,54 +1111,15 @@ class ParkScene {
             characterType: 'auntie'
         };
         
-        this.buildCharacterSkeleton(personGroup, 'auntie');
-        
-        const bones = personGroup.userData.bones;
-        if (bones) {
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                hair.position.set(0, 0.07, 0);
-                bun.position.set(0, 0.2, -0.1);
-                bones.head.add(head);
-                bones.head.add(hair);
-                bones.head.add(bun);
-            }
-            if (bones.chest) {
-                body.position.set(0, 0, 0);
-                body.scale.set(1, 1.1, 1);
-                collar.position.set(0, 0.5, 0);
-                collar.rotation.x = Math.PI / 2;
-                bones.chest.add(body);
-                bones.chest.add(collar);
-            }
-            if (bones.leftArm) {
-                leftArm.position.set(0, 0, 0);
-                leftArm.rotation.set(0, 0, 0.2);
-                bones.leftArm.add(leftArm);
-                bag.position.set(-0.1, 0, 0);
-                bagStrap.position.set(0, 0.1, 0);
-                bagStrap.rotation.y = Math.PI / 2;
-                bones.leftShoulder.add(bag);
-                bones.leftShoulder.add(bagStrap);
-            }
-            if (bones.rightArm) {
-                rightArm.position.set(0, 0, 0);
-                rightArm.rotation.set(0, 0, -0.2);
-                bones.rightArm.add(rightArm);
-            }
-            if (bones.leftLeg) {
-                leftLeg.position.set(0, 0, 0);
-                bones.leftLeg.add(leftLeg);
-                leftShoe.position.set(0, -0.3, 0.02);
-                bones.leftLeg.add(leftShoe);
-            }
-            if (bones.rightLeg) {
-                rightLeg.position.set(0, 0, 0);
-                bones.rightLeg.add(rightLeg);
-                rightShoe.position.set(0, -0.3, 0.02);
-                bones.rightLeg.add(rightShoe);
-            }
-        }
+        personGroup.userData.originalPositions = {
+            body: { y: 1.15 },
+            head: { y: 1.85 },
+            leftLeg: { y: 0.38, x: -0.12 },
+            rightLeg: { y: 0.38, x: 0.12 },
+            leftArm: { y: 1.2, x: -0.3, z: 0.2 },
+            rightArm: { y: 1.2, x: 0.3, z: -0.2 }
+        };
+        personGroup.userData.useSimpleAnimation = true;
         
         return personGroup;
     }
@@ -1357,48 +1244,12 @@ class ParkScene {
             animalType: 'dog'
         };
         
-        this.buildAnimalSkeleton(dogGroup, 'dog');
-        
-        const bones = dogGroup.userData.bones;
-        if (bones) {
-            if (bones.hips) bones.hips.scale.set(1.2, 1.2, 1.2);
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                leftEar.position.set(-0.05, 0.08, 0.07);
-                rightEar.position.set(0.05, 0.08, 0.07);
-                leftEye.position.set(-0.05, 0.03, 0.1);
-                rightEye.position.set(0.05, 0.03, 0.1);
-                nose.position.set(0, -0.02, 0.12);
-                tongue.position.set(0, -0.06, 0.1);
-                bones.head.add(head);
-                bones.head.add(leftEar);
-                bones.head.add(rightEar);
-                bones.head.add(leftEye);
-                bones.head.add(rightEye);
-                bones.head.add(nose);
-                bones.head.add(tongue);
-            }
-            if (bones.chest) {
-                body.position.set(0, 0, 0);
-                body.rotation.z = Math.PI / 2;
-                bodyFront.position.set(0.15, 0, 0);
-                bodyBack.position.set(-0.15, 0, 0);
-                collar.position.set(0.2, 0, 0);
-                collar.rotation.y = Math.PI / 2;
-                tag.position.set(0.2, -0.1, 0);
-                tag.rotation.x = Math.PI / 2;
-                bones.chest.add(body);
-                bones.chest.add(bodyFront);
-                bones.chest.add(bodyBack);
-                bones.chest.add(collar);
-                bones.chest.add(tag);
-            }
-            if (bones.tail3) {
-                tail.position.set(0, 0, 0);
-                tail.rotation.z = 0;
-                bones.tail3.add(tail);
-            }
-        }
+        dogGroup.userData.originalPositions = {
+            body: { y: 0.4 },
+            head: { y: 0.5, x: 0.35 },
+            tail: { y: 0.5, x: -0.35, z: 0 }
+        };
+        dogGroup.userData.useSimpleAnimation = true;
         
         return dogGroup;
     }
@@ -1534,51 +1385,12 @@ class ParkScene {
             animalType: 'cat'
         };
         
-        this.buildAnimalSkeleton(catGroup, 'cat');
-        
-        const bones = catGroup.userData.bones;
-        if (bones) {
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                leftEar.position.set(-0.05, 0.1, 0.05);
-                rightEar.position.set(0.05, 0.1, 0.05);
-                leftInnerEar.position.set(-0.05, 0.1, 0.06);
-                rightInnerEar.position.set(0.05, 0.1, 0.06);
-                leftEye.position.set(-0.04, 0.03, 0.08);
-                rightEye.position.set(0.04, 0.03, 0.08);
-                nose.position.set(0, -0.02, 0.1);
-                bones.head.add(head);
-                bones.head.add(leftEar);
-                bones.head.add(rightEar);
-                bones.head.add(leftInnerEar);
-                bones.head.add(rightInnerEar);
-                bones.head.add(leftEye);
-                bones.head.add(rightEye);
-                bones.head.add(nose);
-            }
-            if (bones.chest) {
-                body.position.set(0, 0, 0);
-                body.rotation.z = Math.PI / 2;
-                bodyFront.position.set(0.12, 0, 0);
-                bodyBack.position.set(-0.12, 0, 0);
-                bones.chest.add(body);
-                bones.chest.add(bodyFront);
-                bones.chest.add(bodyBack);
-                for (let i = 0; i < 4; i++) {
-                    if (catGroup.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry' && c.position.x === -0.1 + i * 0.08)) {
-                        const stripe = catGroup.children.find(c => c.geometry && c.geometry.type === 'BoxGeometry' && c.position.x === -0.1 + i * 0.08);
-                        if (stripe) {
-                            stripe.position.set(-0.1 + i * 0.08, 0.1, 0);
-                            bones.chest.add(stripe);
-                        }
-                    }
-                }
-            }
-            if (bones.tail3) {
-                tail.position.set(0, 0, 0);
-                bones.tail3.add(tail);
-            }
-        }
+        catGroup.userData.originalPositions = {
+            body: { y: 0.28 },
+            head: { y: 0.35, x: 0.28 },
+            tail: { y: 0.3, x: -0.3, z: 0 }
+        };
+        catGroup.userData.useSimpleAnimation = true;
         
         return catGroup;
     }
@@ -1679,48 +1491,13 @@ class ParkScene {
             animalType: 'pigeon'
         };
         
-        this.buildAnimalSkeleton(birdGroup, 'pigeon');
-        
-        const bones = birdGroup.userData.bones;
-        if (bones) {
-            if (bones.head) {
-                head.position.set(0, 0, 0);
-                beak.position.set(0, -0.02, 0.08);
-                eye.position.set(0.02, 0.02, 0.03);
-                bones.head.add(head);
-                bones.head.add(beak);
-                bones.head.add(eye);
-            }
-            if (bones.body) {
-                body.position.set(0, 0, 0);
-                body.rotation.z = Math.PI / 2;
-                bodyFront.position.set(0.05, 0, 0);
-                bodyBack.position.set(-0.05, 0, 0);
-                tail.position.set(-0.1, 0, 0);
-                bones.body.add(body);
-                bones.body.add(bodyFront);
-                bones.body.add(bodyBack);
-                bones.body.add(tail);
-            }
-            if (bones.leftWing && bones.rightWing) {
-                leftWing.position.set(0, 0, 0);
-                rightWing.position.set(0, 0, 0);
-                leftWing.rotation.z = 0;
-                rightWing.rotation.z = 0;
-                bones.leftWing.add(leftWing);
-                bones.rightWing.add(rightWing);
-            }
-            if (bones.leftLeg && bones.rightLeg) {
-                leftLeg.position.set(0, 0, 0);
-                rightLeg.position.set(0, 0, 0);
-                leftFoot.position.set(0, -0.03, 0);
-                rightFoot.position.set(0, -0.03, 0);
-                bones.leftLeg.add(leftLeg);
-                bones.leftLeg.add(leftFoot);
-                bones.rightLeg.add(rightLeg);
-                bones.rightLeg.add(rightFoot);
-            }
-        }
+        birdGroup.userData.originalPositions = {
+            body: { y: 0.1 },
+            head: { y: 0.2, x: 0 },
+            leftWing: { y: 0.15, x: -0.08 },
+            rightWing: { y: 0.15, x: 0.08 }
+        };
+        birdGroup.userData.useSimpleAnimation = true;
         
         return birdGroup;
     }
@@ -3482,6 +3259,140 @@ class ParkScene {
         console.log('✅ 动画系统测试完成!');
     }
 
+    animateCharacterSimple(char, time, isMoving) {
+        const origPos = char.userData.originalPositions;
+        if (!origPos) return;
+        
+        const swaySpeed = isMoving ? 8 : 2;
+        const swayAmount = isMoving ? 0.08 : 0.02;
+        const bobAmount = isMoving ? 0.05 : 0.01;
+        
+        const sway = Math.sin(time * swaySpeed + (char.userData.swayOffset || 0)) * swayAmount;
+        const bob = Math.abs(Math.sin(time * swaySpeed * 2 + (char.userData.swayOffset || 0))) * bobAmount;
+        
+        let bodyIndex = -1, headIndex = -1, leftLegIndex = -1, rightLegIndex = -1;
+        let leftArmIndex = -1, rightArmIndex = -1;
+        
+        char.children.forEach((child, idx) => {
+            if (child.geometry && child.geometry.type === 'CylinderGeometry') {
+                if (bodyIndex === -1 && child.position.y > 0.8) bodyIndex = idx;
+                else if (leftLegIndex === -1 && child.position.x < 0 && child.position.y < 0.6) leftLegIndex = idx;
+                else if (rightLegIndex === -1 && child.position.x > 0 && child.position.y < 0.6) rightLegIndex = idx;
+                else if (leftArmIndex === -1 && child.position.x < -0.2) leftArmIndex = idx;
+                else if (rightArmIndex === -1 && child.position.x > 0.2) rightArmIndex = idx;
+            }
+            if (child.geometry && child.geometry.type === 'SphereGeometry') {
+                if (headIndex === -1 && child.position.y > 1.3) headIndex = idx;
+            }
+        });
+        
+        if (bodyIndex >= 0) {
+            char.children[bodyIndex].position.y = origPos.body.y + bob;
+            char.children[bodyIndex].rotation.z = sway * 0.3;
+        }
+        
+        if (headIndex >= 0) {
+            char.children[headIndex].position.y = origPos.head.y + bob * 0.8;
+            char.children[headIndex].rotation.z = sway * 0.2;
+        }
+        
+        if (leftLegIndex >= 0 && rightLegIndex >= 0) {
+            const legSwing = isMoving ? Math.sin(time * swaySpeed) * 0.3 : 0;
+            char.children[leftLegIndex].rotation.x = legSwing;
+            char.children[rightLegIndex].rotation.x = -legSwing;
+        }
+        
+        if (leftArmIndex >= 0 && rightArmIndex >= 0) {
+            const armSwing = isMoving ? Math.sin(time * swaySpeed + Math.PI) * 0.4 : Math.sin(time * 2) * 0.1;
+            char.children[leftArmIndex].rotation.x = armSwing;
+            char.children[rightArmIndex].rotation.x = -armSwing;
+        }
+    }
+
+    animateAnimalSimple(animal, time, isMoving, isFlying) {
+        const origPos = animal.userData.originalPositions;
+        const animalType = animal.userData.animalType;
+        if (!origPos) return;
+        
+        if (animalType === 'dog' || animalType === 'cat') {
+            const swaySpeed = isMoving ? 10 : 3;
+            const swayAmount = isMoving ? 0.1 : 0.03;
+            const bobAmount = isMoving ? 0.04 : 0.01;
+            
+            const sway = Math.sin(time * swaySpeed) * swayAmount;
+            const bob = Math.abs(Math.sin(time * swaySpeed * 2)) * bobAmount;
+            
+            let bodyIndex = -1, headIndex = -1, tailIndex = -1;
+            let legIndices = [];
+            
+            animal.children.forEach((child, idx) => {
+                if (child.geometry && child.geometry.type === 'CylinderGeometry') {
+                    if (bodyIndex === -1) bodyIndex = idx;
+                }
+                if (child.geometry && child.geometry.type === 'SphereGeometry') {
+                    if (child.position.x > 0.2 && headIndex === -1) headIndex = idx;
+                    if (child.position.x < -0.2 && bodyIndex !== -1 && tailIndex === -1) tailIndex = idx;
+                }
+                if (child.geometry && child.geometry.type === 'CylinderGeometry' && child.position.y < 0.3) {
+                    legIndices.push(idx);
+                }
+            });
+            
+            if (bodyIndex >= 0) {
+                animal.children[bodyIndex].position.y = origPos.body.y + bob;
+            }
+            
+            if (headIndex >= 0) {
+                animal.children[headIndex].position.y = origPos.head.y + bob * 0.7;
+                animal.children[headIndex].rotation.z = sway * 0.3;
+            }
+            
+            if (tailIndex >= 0) {
+                const wagSpeed = animalType === 'dog' ? 8 : 4;
+                animal.children[tailIndex].rotation.z = Math.sin(time * wagSpeed) * 0.5;
+                animal.children[tailIndex].position.x = origPos.tail.x + Math.sin(time * wagSpeed) * 0.02;
+            }
+            
+            if (isMoving && legIndices.length >= 2) {
+                const legSwing = Math.sin(time * swaySpeed) * 0.3;
+                for (let i = 0; i < legIndices.length; i++) {
+                    animal.children[legIndices[i]].rotation.x = (i % 2 === 0 ? legSwing : -legSwing);
+                }
+            }
+        } else if (animalType === 'pigeon') {
+            const wingSpeed = isFlying ? 15 : (isMoving ? 4 : 1);
+            const wingAmount = isFlying ? 1.2 : (isMoving ? 0.1 : 0.03);
+            
+            let leftWingIndex = -1, rightWingIndex = -1, bodyIndex = -1;
+            
+            animal.children.forEach((child, idx) => {
+                if (child.geometry && child.geometry.type === 'CylinderGeometry') {
+                    if (bodyIndex === -1) bodyIndex = idx;
+                }
+                if (child.geometry && child.geometry.type === 'BoxGeometry') {
+                    if (child.position.x < -0.05 && leftWingIndex === -1) leftWingIndex = idx;
+                    if (child.position.x > 0.05 && rightWingIndex === -1) rightWingIndex = idx;
+                }
+            });
+            
+            if (isFlying) {
+                animal.position.y = 2 + Math.sin(time * 2) * 0.5;
+            } else {
+                animal.position.y = 0;
+            }
+            
+            if (leftWingIndex >= 0 && rightWingIndex >= 0) {
+                animal.children[leftWingIndex].rotation.z = Math.sin(time * wingSpeed) * wingAmount;
+                animal.children[rightWingIndex].rotation.z = -Math.sin(time * wingSpeed) * wingAmount;
+            }
+            
+            if (bodyIndex >= 0) {
+                const bob = isMoving ? Math.abs(Math.sin(time * 10)) * 0.02 : Math.sin(time * 2) * 0.01;
+                animal.children[bodyIndex].position.y = origPos.body.y + bob;
+            }
+        }
+    }
+
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
         
@@ -3507,26 +3418,16 @@ class ParkScene {
         });
         
         this.characters.forEach(char => {
-            if (char.userData.bones && char.userData.animationState) {
-                this.animateHumanCharacter(char, time, delta);
-            } else {
-                this.animateCharacter(char, time);
-            }
+            const aiResult = this.updateCharacterAI(char, delta);
+            const isMoving = aiResult.isMoving;
+            this.animateCharacterSimple(char, time, isMoving);
         });
         
         this.animals.forEach(animal => {
-            if (animal.userData.bones && animal.userData.animationState) {
-                const animalType = animal.userData.animalType;
-                if (animalType === 'dog') {
-                    this.animateDogCharacter(animal, time, delta);
-                } else if (animalType === 'cat') {
-                    this.animateCatCharacter(animal, time, delta);
-                } else if (animalType === 'pigeon') {
-                    this.animatePigeonCharacter(animal, time, delta);
-                }
-            } else {
-                this.animateAnimal(animal, time);
-            }
+            const aiResult = this.updateAnimalAI(animal, delta);
+            const isMoving = aiResult.isMoving;
+            const isFlying = animal.userData.animalType === 'pigeon' && Math.random() < 0.0002;
+            this.animateAnimalSimple(animal, time, isMoving, isFlying);
         });
         
         this.shops.forEach(shop => {

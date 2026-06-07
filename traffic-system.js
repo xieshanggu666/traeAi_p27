@@ -119,19 +119,21 @@ class TrafficSystem {
         const secondaryOffset = offset / 2;
 
         const createStraightRoad = (x, z, width, length, rotation) => {
-            const roadGeo = new THREE.BoxGeometry(length, 0.2, width);
+            const roadGeo = new THREE.BoxGeometry(length, 0.1, width);
             const road = new THREE.Mesh(roadGeo, roadMat);
-            road.position.set(x, 0.1, z);
+            road.position.set(x, 0.05, z);
             road.rotation.y = rotation;
             road.receiveShadow = true;
+            road.renderOrder = 1;
             roadGroup.add(road);
             
             if (width >= this.MAIN_ROAD_WIDTH) {
                 const centerGeo = new THREE.PlaneGeometry(length, 0.15);
                 const centerLine = new THREE.Mesh(centerGeo, centerMarkingMat);
-                centerLine.position.set(x, 0.21, z);
+                centerLine.position.set(x, 0.11, z);
                 centerLine.rotation.x = -Math.PI / 2;
                 centerLine.rotation.y = rotation;
+                centerLine.renderOrder = 2;
                 roadGroup.add(centerLine);
             }
             
@@ -140,24 +142,27 @@ class TrafficSystem {
             const edge2 = new THREE.Mesh(edgeGeo, edgeMarkingMat);
             
             if (rotation === 0) {
-                edge1.position.set(x, 0.21, z + width / 2 - 0.1);
-                edge2.position.set(x, 0.21, z - width / 2 + 0.1);
+                edge1.position.set(x, 0.105, z + width / 2 - 0.1);
+                edge2.position.set(x, 0.105, z - width / 2 + 0.1);
             } else {
-                edge1.position.set(x + width / 2 - 0.1, 0.21, z);
-                edge2.position.set(x - width / 2 + 0.1, 0.21, z);
+                edge1.position.set(x + width / 2 - 0.1, 0.105, z);
+                edge2.position.set(x - width / 2 + 0.1, 0.105, z);
             }
             edge1.rotation.x = -Math.PI / 2;
             edge2.rotation.x = -Math.PI / 2;
             edge1.rotation.y = rotation;
             edge2.rotation.y = rotation;
+            edge1.renderOrder = 2;
+            edge2.renderOrder = 2;
             roadGroup.add(edge1, edge2);
         };
 
         const createIntersection = (x, z, size) => {
-            const intersectionGeo = new THREE.BoxGeometry(size, 0.2, size);
+            const intersectionGeo = new THREE.BoxGeometry(size, 0.1, size);
             const intersection = new THREE.Mesh(intersectionGeo, roadMat);
-            intersection.position.set(x, 0.1, z);
+            intersection.position.set(x, 0.05, z);
             intersection.receiveShadow = true;
+            intersection.renderOrder = 1;
             roadGroup.add(intersection);
             
             const crosswalkGeo = new THREE.PlaneGeometry(6, 3);
@@ -171,9 +176,10 @@ class TrafficSystem {
             
             positions.forEach(pos => {
                 const crosswalk = new THREE.Mesh(crosswalkGeo, crosswalkMat);
-                crosswalk.position.set(x + pos.x, 0.22, z + pos.z);
+                crosswalk.position.set(x + pos.x, 0.12, z + pos.z);
                 crosswalk.rotation.x = -Math.PI / 2;
                 crosswalk.rotation.y = pos.rot;
+                crosswalk.renderOrder = 3;
                 roadGroup.add(crosswalk);
             });
         };
@@ -204,11 +210,12 @@ class TrafficSystem {
         const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x8B8682, roughness: 0.95 });
         
         const createSidewalk = (x, z, w, l, rot) => {
-            const sidewalkGeo = new THREE.BoxGeometry(l, 0.1, w);
+            const sidewalkGeo = new THREE.BoxGeometry(l, 0.05, w);
             const sidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-            sidewalk.position.set(x, 0.05, z);
+            sidewalk.position.set(x, 0.025, z);
             sidewalk.rotation.y = rot;
             sidewalk.receiveShadow = true;
+            sidewalk.renderOrder = 1;
             roadGroup.add(sidewalk);
         };
 
@@ -255,15 +262,15 @@ class TrafficSystem {
             {
                 name: 'outer_ring_clockwise',
                 points: [
-                    new THREE.Vector3(offset + laneOffsetMain, 0.25, -offset + turnRadius),
-                    new THREE.Vector3(offset + laneOffsetMain, 0.25, offset - turnRadius),
-                    new THREE.Vector3(offset + turnRadius, 0.25, offset + laneOffsetMain),
-                    new THREE.Vector3(-offset - turnRadius, 0.25, offset + laneOffsetMain),
-                    new THREE.Vector3(-offset - laneOffsetMain, 0.25, offset - turnRadius),
-                    new THREE.Vector3(-offset - laneOffsetMain, 0.25, -offset + turnRadius),
-                    new THREE.Vector3(-offset - turnRadius, 0.25, -offset - laneOffsetMain),
-                    new THREE.Vector3(offset + turnRadius, 0.25, -offset - laneOffsetMain),
-                    new THREE.Vector3(offset + laneOffsetMain, 0.25, -offset + turnRadius)
+                    new THREE.Vector3(offset + laneOffsetMain, 0.15, -offset + turnRadius),
+                    new THREE.Vector3(offset + laneOffsetMain, 0.15, offset - turnRadius),
+                    new THREE.Vector3(offset + turnRadius, 0.15, offset + laneOffsetMain),
+                    new THREE.Vector3(-offset - turnRadius, 0.15, offset + laneOffsetMain),
+                    new THREE.Vector3(-offset - laneOffsetMain, 0.15, offset - turnRadius),
+                    new THREE.Vector3(-offset - laneOffsetMain, 0.15, -offset + turnRadius),
+                    new THREE.Vector3(-offset - turnRadius, 0.15, -offset - laneOffsetMain),
+                    new THREE.Vector3(offset + turnRadius, 0.15, -offset - laneOffsetMain),
+                    new THREE.Vector3(offset + laneOffsetMain, 0.15, -offset + turnRadius)
                 ],
                 loop: true,
                 connectTo: null
@@ -271,15 +278,15 @@ class TrafficSystem {
             {
                 name: 'outer_ring_counterclockwise',
                 points: [
-                    new THREE.Vector3(offset - turnRadius, 0.25, -offset - laneOffsetMain),
-                    new THREE.Vector3(-offset + turnRadius, 0.25, -offset - laneOffsetMain),
-                    new THREE.Vector3(-offset - laneOffsetMain, 0.25, -offset + turnRadius),
-                    new THREE.Vector3(-offset - laneOffsetMain, 0.25, offset - turnRadius),
-                    new THREE.Vector3(-offset + turnRadius, 0.25, offset + laneOffsetMain),
-                    new THREE.Vector3(offset - turnRadius, 0.25, offset + laneOffsetMain),
-                    new THREE.Vector3(offset + laneOffsetMain, 0.25, offset - turnRadius),
-                    new THREE.Vector3(offset + laneOffsetMain, 0.25, -offset + turnRadius),
-                    new THREE.Vector3(offset - turnRadius, 0.25, -offset - laneOffsetMain)
+                    new THREE.Vector3(offset - turnRadius, 0.15, -offset - laneOffsetMain),
+                    new THREE.Vector3(-offset + turnRadius, 0.15, -offset - laneOffsetMain),
+                    new THREE.Vector3(-offset - laneOffsetMain, 0.15, -offset + turnRadius),
+                    new THREE.Vector3(-offset - laneOffsetMain, 0.15, offset - turnRadius),
+                    new THREE.Vector3(-offset + turnRadius, 0.15, offset + laneOffsetMain),
+                    new THREE.Vector3(offset - turnRadius, 0.15, offset + laneOffsetMain),
+                    new THREE.Vector3(offset + laneOffsetMain, 0.15, offset - turnRadius),
+                    new THREE.Vector3(offset + laneOffsetMain, 0.15, -offset + turnRadius),
+                    new THREE.Vector3(offset - turnRadius, 0.15, -offset - laneOffsetMain)
                 ],
                 loop: true,
                 connectTo: null
@@ -287,15 +294,15 @@ class TrafficSystem {
             {
                 name: 'inner_ring_clockwise',
                 points: [
-                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.25, -secondaryOffset + turnRadiusSec),
-                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.25, secondaryOffset - turnRadiusSec),
-                    new THREE.Vector3(secondaryOffset + turnRadiusSec, 0.25, secondaryOffset + laneOffsetSec),
-                    new THREE.Vector3(-secondaryOffset - turnRadiusSec, 0.25, secondaryOffset + laneOffsetSec),
-                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.25, secondaryOffset - turnRadiusSec),
-                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.25, -secondaryOffset + turnRadiusSec),
-                    new THREE.Vector3(-secondaryOffset - turnRadiusSec, 0.25, -secondaryOffset - laneOffsetSec),
-                    new THREE.Vector3(secondaryOffset + turnRadiusSec, 0.25, -secondaryOffset - laneOffsetSec),
-                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.25, -secondaryOffset + turnRadiusSec)
+                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.15, -secondaryOffset + turnRadiusSec),
+                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.15, secondaryOffset - turnRadiusSec),
+                    new THREE.Vector3(secondaryOffset + turnRadiusSec, 0.15, secondaryOffset + laneOffsetSec),
+                    new THREE.Vector3(-secondaryOffset - turnRadiusSec, 0.15, secondaryOffset + laneOffsetSec),
+                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.15, secondaryOffset - turnRadiusSec),
+                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.15, -secondaryOffset + turnRadiusSec),
+                    new THREE.Vector3(-secondaryOffset - turnRadiusSec, 0.15, -secondaryOffset - laneOffsetSec),
+                    new THREE.Vector3(secondaryOffset + turnRadiusSec, 0.15, -secondaryOffset - laneOffsetSec),
+                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.15, -secondaryOffset + turnRadiusSec)
                 ],
                 loop: true,
                 connectTo: null
@@ -303,15 +310,15 @@ class TrafficSystem {
             {
                 name: 'inner_ring_counterclockwise',
                 points: [
-                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.25, -secondaryOffset - laneOffsetSec),
-                    new THREE.Vector3(-secondaryOffset + turnRadiusSec, 0.25, -secondaryOffset - laneOffsetSec),
-                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.25, -secondaryOffset + turnRadiusSec),
-                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.25, secondaryOffset - turnRadiusSec),
-                    new THREE.Vector3(-secondaryOffset + turnRadiusSec, 0.25, secondaryOffset + laneOffsetSec),
-                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.25, secondaryOffset + laneOffsetSec),
-                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.25, secondaryOffset - turnRadiusSec),
-                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.25, -secondaryOffset + turnRadiusSec),
-                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.25, -secondaryOffset - laneOffsetSec)
+                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.15, -secondaryOffset - laneOffsetSec),
+                    new THREE.Vector3(-secondaryOffset + turnRadiusSec, 0.15, -secondaryOffset - laneOffsetSec),
+                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.15, -secondaryOffset + turnRadiusSec),
+                    new THREE.Vector3(-secondaryOffset - laneOffsetSec, 0.15, secondaryOffset - turnRadiusSec),
+                    new THREE.Vector3(-secondaryOffset + turnRadiusSec, 0.15, secondaryOffset + laneOffsetSec),
+                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.15, secondaryOffset + laneOffsetSec),
+                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.15, secondaryOffset - turnRadiusSec),
+                    new THREE.Vector3(secondaryOffset + laneOffsetSec, 0.15, -secondaryOffset + turnRadiusSec),
+                    new THREE.Vector3(secondaryOffset - turnRadiusSec, 0.15, -secondaryOffset - laneOffsetSec)
                 ],
                 loop: true,
                 connectTo: null
@@ -686,7 +693,7 @@ class TrafficSystem {
             const p2 = path.points[(config.pointIdx + 1) % path.points.length];
             
             vehicle.position.lerpVectors(p1, p2, config.progress);
-            vehicle.position.y = 0.25;
+            vehicle.position.y = 0.15;
             
             const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
             vehicle.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI / 2;
@@ -855,9 +862,10 @@ class TrafficSystem {
                 const currentP2 = path.points[currentNextIdx];
                 
                 vehicle.position.lerpVectors(currentP1, currentP2, data.progress);
-                vehicle.position.y = 0.25;
+                vehicle.position.y = 0.15;
                 
                 const dir = new THREE.Vector3().subVectors(currentP2, currentP1).normalize();
+                dir.y = 0;
                 if (dir.length() > 0.1) {
                     let targetRot = Math.atan2(dir.x, dir.z) + Math.PI / 2;
                     
@@ -865,7 +873,7 @@ class TrafficSystem {
                     while (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
                     while (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
                     
-                    const rotSpeed = 2.5;
+                    const rotSpeed = data.vehicleType === 'bus' ? 1.5 : 3;
                     vehicle.rotation.y += rotDiff * Math.min(1, delta * rotSpeed);
                 }
                 
