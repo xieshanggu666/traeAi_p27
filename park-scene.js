@@ -9,6 +9,8 @@ class ParkScene {
         this.currentView = 'aerial';
         this.clock = new THREE.Clock();
         this.animationId = null;
+        this.characters = [];
+        this.animals = [];
         
         this.PARK_SIZE = 120;
         this.GROUND_SIZE = 200;
@@ -49,6 +51,12 @@ class ParkScene {
             
             this.createLightingSystem();
             console.log('✓ 照明系统创建完成');
+            
+            this.createCharacters();
+            console.log('✓ 人物角色创建完成');
+            
+            this.createAnimals();
+            console.log('✓ 动物角色创建完成');
             
             this.setupEventListeners();
             console.log('✓ 事件监听器创建完成');
@@ -728,6 +736,678 @@ class ParkScene {
         });
     }
 
+    createElderlyMan(x, z, rotation = 0) {
+        const personGroup = new THREE.Group();
+        
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xFFD5B5, roughness: 0.8 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: 0x4A90D9, roughness: 0.7 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x2F4F4F, roughness: 0.8 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.9 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2C2C2C, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.25, 0.3, 0.8, 8);
+        const body = new THREE.Mesh(bodyGeo, shirtMat);
+        body.position.y = 1.1;
+        body.castShadow = true;
+        personGroup.add(body);
+        
+        const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.y = 1.75;
+        head.castShadow = true;
+        personGroup.add(head);
+        
+        const hairGeo = new THREE.SphereGeometry(0.23, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.y = 1.82;
+        personGroup.add(hair);
+        
+        const beardGeo = new THREE.SphereGeometry(0.15, 12, 8);
+        const beard = new THREE.Mesh(beardGeo, hairMat);
+        beard.position.set(0, 1.62, 0.15);
+        beard.scale.set(1, 0.8, 0.6);
+        personGroup.add(beard);
+        
+        const legGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.6, 8);
+        const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+        leftLeg.position.set(-0.12, 0.4, 0);
+        leftLeg.castShadow = true;
+        personGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+        rightLeg.position.set(0.12, 0.4, 0);
+        rightLeg.castShadow = true;
+        personGroup.add(rightLeg);
+        
+        const shoeGeo = new THREE.BoxGeometry(0.12, 0.06, 0.2);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(-0.12, 0.06, 0.02);
+        leftShoe.castShadow = true;
+        personGroup.add(leftShoe);
+        
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0.12, 0.06, 0.02);
+        rightShoe.castShadow = true;
+        personGroup.add(rightShoe);
+        
+        const armGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.5, 8);
+        const leftArm = new THREE.Mesh(armGeo, shirtMat);
+        leftArm.position.set(-0.32, 1.15, 0);
+        leftArm.rotation.z = 0.3;
+        leftArm.castShadow = true;
+        personGroup.add(leftArm);
+        
+        const rightArm = new THREE.Mesh(armGeo, shirtMat);
+        rightArm.position.set(0.32, 1.15, 0);
+        rightArm.rotation.z = -0.3;
+        rightArm.castShadow = true;
+        personGroup.add(rightArm);
+        
+        const caneGeo = new THREE.CylinderGeometry(0.02, 0.025, 1.2, 6);
+        const caneMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 });
+        const cane = new THREE.Mesh(caneGeo, caneMat);
+        cane.position.set(0.35, 0.6, 0.15);
+        cane.rotation.z = -0.1;
+        cane.castShadow = true;
+        personGroup.add(cane);
+        
+        const caneHandleGeo = new THREE.TorusGeometry(0.06, 0.02, 8, 16);
+        const caneHandle = new THREE.Mesh(caneHandleGeo, caneMat);
+        caneHandle.position.set(0.32, 1.2, 0.15);
+        caneHandle.rotation.y = Math.PI / 2;
+        personGroup.add(caneHandle);
+        
+        personGroup.position.set(x, 0, z);
+        personGroup.rotation.y = rotation;
+        personGroup.userData = { 
+            type: 'character', 
+            name: '张爷爷',
+            walkSpeed: 0,
+            swayOffset: Math.random() * Math.PI * 2
+        };
+        return personGroup;
+    }
+
+    createChild(x, z, rotation = 0) {
+        const personGroup = new THREE.Group();
+        
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xFFE0C3, roughness: 0.8 });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: 0xFF6B6B, roughness: 0.7 });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x4ECDC4, roughness: 0.8 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0x2C1810, roughness: 0.9 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.6 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.55, 8);
+        const body = new THREE.Mesh(bodyGeo, shirtMat);
+        body.position.y = 0.85;
+        body.castShadow = true;
+        personGroup.add(body);
+        
+        const headGeo = new THREE.SphereGeometry(0.18, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.y = 1.35;
+        head.castShadow = true;
+        personGroup.add(head);
+        
+        const hairGeo = new THREE.SphereGeometry(0.19, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.y = 1.42;
+        personGroup.add(hair);
+        
+        const capGeo = new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2.5);
+        const capMat = new THREE.MeshStandardMaterial({ color: 0xFFD93D, roughness: 0.6 });
+        const cap = new THREE.Mesh(capGeo, capMat);
+        cap.position.y = 1.45;
+        personGroup.add(cap);
+        
+        const capBrimGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.25, 8);
+        const capBrim = new THREE.Mesh(capBrimGeo, capMat);
+        capBrim.position.set(0, 1.38, 0.15);
+        capBrim.rotation.x = Math.PI / 2;
+        personGroup.add(capBrim);
+        
+        const legGeo = new THREE.CylinderGeometry(0.06, 0.07, 0.45, 8);
+        const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+        leftLeg.position.set(-0.1, 0.32, 0);
+        leftLeg.castShadow = true;
+        personGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+        rightLeg.position.set(0.1, 0.32, 0);
+        rightLeg.castShadow = true;
+        personGroup.add(rightLeg);
+        
+        const shoeGeo = new THREE.BoxGeometry(0.1, 0.05, 0.16);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(-0.1, 0.05, 0.02);
+        leftShoe.castShadow = true;
+        personGroup.add(leftShoe);
+        
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0.1, 0.05, 0.02);
+        rightShoe.castShadow = true;
+        personGroup.add(rightShoe);
+        
+        const armGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.4, 8);
+        const leftArm = new THREE.Mesh(armGeo, shirtMat);
+        leftArm.position.set(-0.25, 0.9, 0);
+        leftArm.rotation.z = 0.5;
+        leftArm.castShadow = true;
+        personGroup.add(leftArm);
+        
+        const rightArm = new THREE.Mesh(armGeo, shirtMat);
+        rightArm.position.set(0.25, 0.9, 0);
+        rightArm.rotation.z = -0.5;
+        rightArm.castShadow = true;
+        personGroup.add(rightArm);
+        
+        const balloonGeo = new THREE.SphereGeometry(0.15, 16, 16);
+        const balloonMat = new THREE.MeshStandardMaterial({ 
+            color: 0xFF69B4, 
+            emissive: 0xFF69B4,
+            emissiveIntensity: 0.1,
+            roughness: 0.3
+        });
+        const balloon = new THREE.Mesh(balloonGeo, balloonMat);
+        balloon.position.set(0.3, 1.8, 0);
+        balloon.castShadow = true;
+        personGroup.add(balloon);
+        
+        const stringGeo = new THREE.CylinderGeometry(0.005, 0.005, 0.5, 4);
+        const stringMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+        const string = new THREE.Mesh(stringGeo, stringMat);
+        string.position.set(0.28, 1.45, 0);
+        personGroup.add(string);
+        
+        personGroup.position.set(x, 0, z);
+        personGroup.rotation.y = rotation;
+        personGroup.userData = { 
+            type: 'character', 
+            name: '小明',
+            walkSpeed: 0.02,
+            swayOffset: Math.random() * Math.PI * 2,
+            jumpOffset: Math.random() * Math.PI * 2
+        };
+        return personGroup;
+    }
+
+    createAuntie(x, z, rotation = 0) {
+        const personGroup = new THREE.Group();
+        
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xFFD5B5, roughness: 0.8 });
+        const dressMat = new THREE.MeshStandardMaterial({ color: 0x9B59B6, roughness: 0.7 });
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0x1C1C1C, roughness: 0.9 });
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x2C2C2C, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.22, 0.28, 0.9, 8);
+        const body = new THREE.Mesh(bodyGeo, dressMat);
+        body.position.y = 1.15;
+        body.castShadow = true;
+        personGroup.add(body);
+        
+        const collarGeo = new THREE.TorusGeometry(0.23, 0.04, 8, 16);
+        const collarMat = new THREE.MeshStandardMaterial({ color: 0xF1C40F, roughness: 0.6 });
+        const collar = new THREE.Mesh(collarGeo, collarMat);
+        collar.position.y = 1.65;
+        collar.rotation.x = Math.PI / 2;
+        personGroup.add(collar);
+        
+        const headGeo = new THREE.SphereGeometry(0.2, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.y = 1.85;
+        head.castShadow = true;
+        personGroup.add(head);
+        
+        const hairGeo = new THREE.SphereGeometry(0.22, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.y = 1.92;
+        personGroup.add(hair);
+        
+        const bunGeo = new THREE.SphereGeometry(0.1, 12, 12);
+        const bun = new THREE.Mesh(bunGeo, hairMat);
+        bun.position.set(0, 2.05, -0.1);
+        personGroup.add(bun);
+        
+        const legGeo = new THREE.CylinderGeometry(0.07, 0.08, 0.55, 8);
+        const leftLeg = new THREE.Mesh(legGeo, dressMat);
+        leftLeg.position.set(-0.12, 0.38, 0);
+        leftLeg.castShadow = true;
+        personGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeo, dressMat);
+        rightLeg.position.set(0.12, 0.38, 0);
+        rightLeg.castShadow = true;
+        personGroup.add(rightLeg);
+        
+        const shoeGeo = new THREE.BoxGeometry(0.11, 0.05, 0.18);
+        const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        leftShoe.position.set(-0.12, 0.05, 0.02);
+        leftShoe.castShadow = true;
+        personGroup.add(leftShoe);
+        
+        const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+        rightShoe.position.set(0.12, 0.05, 0.02);
+        rightShoe.castShadow = true;
+        personGroup.add(rightShoe);
+        
+        const armGeo = new THREE.CylinderGeometry(0.055, 0.05, 0.5, 8);
+        const leftArm = new THREE.Mesh(armGeo, dressMat);
+        leftArm.position.set(-0.3, 1.2, 0);
+        leftArm.rotation.z = 0.2;
+        leftArm.castShadow = true;
+        personGroup.add(leftArm);
+        
+        const rightArm = new THREE.Mesh(armGeo, dressMat);
+        rightArm.position.set(0.3, 1.2, 0);
+        rightArm.rotation.z = -0.2;
+        rightArm.castShadow = true;
+        personGroup.add(rightArm);
+        
+        const bagGeo = new THREE.BoxGeometry(0.2, 0.25, 0.1);
+        const bagMat = new THREE.MeshStandardMaterial({ color: 0xE67E22, roughness: 0.6 });
+        const bag = new THREE.Mesh(bagGeo, bagMat);
+        bag.position.set(-0.4, 0.9, 0);
+        bag.castShadow = true;
+        personGroup.add(bag);
+        
+        const bagStrapGeo = new THREE.TorusGeometry(0.15, 0.015, 6, 16);
+        const bagStrap = new THREE.Mesh(bagStrapGeo, bagMat);
+        bagStrap.position.set(-0.3, 1.3, 0);
+        bagStrap.rotation.y = Math.PI / 2;
+        personGroup.add(bagStrap);
+        
+        personGroup.position.set(x, 0, z);
+        personGroup.rotation.y = rotation;
+        personGroup.userData = { 
+            type: 'character', 
+            name: '李阿姨',
+            walkSpeed: 0.01,
+            swayOffset: Math.random() * Math.PI * 2
+        };
+        return personGroup;
+    }
+
+    createDog(x, z, rotation = 0) {
+        const dogGroup = new THREE.Group();
+        
+        const furMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.9 });
+        const earMat = new THREE.MeshStandardMaterial({ color: 0xB8956E, roughness: 0.9 });
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0x2C2C2C, roughness: 0.5 });
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x1C1C1C, roughness: 0.3 });
+        const tongueMat = new THREE.MeshStandardMaterial({ color: 0xFF6B6B, roughness: 0.6 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.4, 12);
+        const body = new THREE.Mesh(bodyGeo, furMat);
+        body.position.y = 0.4;
+        body.rotation.z = Math.PI / 2;
+        body.castShadow = true;
+        dogGroup.add(body);
+        
+        const bodyFront = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), furMat);
+        bodyFront.position.set(0.2, 0.4, 0);
+        bodyFront.castShadow = true;
+        dogGroup.add(bodyFront);
+        
+        const bodyBack = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), furMat);
+        bodyBack.position.set(-0.2, 0.4, 0);
+        bodyBack.castShadow = true;
+        dogGroup.add(bodyBack);
+        
+        const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
+        const head = new THREE.Mesh(headGeo, furMat);
+        head.position.set(0.35, 0.5, 0);
+        head.castShadow = true;
+        dogGroup.add(head);
+        
+        const snoutGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.12, 8);
+        const snout = new THREE.Mesh(snoutGeo, furMat);
+        snout.position.set(0.45, 0.45, 0);
+        snout.rotation.z = Math.PI / 2;
+        dogGroup.add(snout);
+        
+        const noseGeo = new THREE.SphereGeometry(0.04, 8, 8);
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.position.set(0.52, 0.47, 0);
+        dogGroup.add(nose);
+        
+        const tongueGeo = new THREE.BoxGeometry(0.06, 0.01, 0.04);
+        const tongue = new THREE.Mesh(tongueGeo, tongueMat);
+        tongue.position.set(0.48, 0.4, 0);
+        dogGroup.add(tongue);
+        
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+        leftEye.position.set(0.4, 0.55, 0.07);
+        dogGroup.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+        rightEye.position.set(0.4, 0.55, -0.07);
+        dogGroup.add(rightEye);
+        
+        const leftEarGeo = new THREE.ConeGeometry(0.06, 0.12, 6);
+        const leftEar = new THREE.Mesh(leftEarGeo, earMat);
+        leftEar.position.set(0.3, 0.65, 0.08);
+        leftEar.rotation.z = -0.5;
+        dogGroup.add(leftEar);
+        
+        const rightEar = new THREE.Mesh(leftEarGeo, earMat);
+        rightEar.position.set(0.3, 0.65, -0.08);
+        rightEar.rotation.z = 0.5;
+        dogGroup.add(rightEar);
+        
+        const legGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.3, 8);
+        const legPositions = [
+            [0.15, 0.15, 0.1], [0.15, 0.15, -0.1],
+            [-0.15, 0.15, 0.1], [-0.15, 0.15, -0.1]
+        ];
+        legPositions.forEach(pos => {
+            const leg = new THREE.Mesh(legGeo, furMat);
+            leg.position.set(pos[0], pos[1], pos[2]);
+            leg.castShadow = true;
+            dogGroup.add(leg);
+        });
+        
+        const pawGeo = new THREE.SphereGeometry(0.05, 8, 8);
+        const pawMat = new THREE.MeshStandardMaterial({ color: 0x8B7355, roughness: 0.8 });
+        [[0.15, 0.01, 0.1], [0.15, 0.01, -0.1],
+         [-0.15, 0.01, 0.1], [-0.15, 0.01, -0.1]].forEach(pos => {
+            const paw = new THREE.Mesh(pawGeo, pawMat);
+            paw.position.set(pos[0], pos[1], pos[2]);
+            paw.scale.set(1, 0.5, 1);
+            dogGroup.add(paw);
+        });
+        
+        const tailGeo = new THREE.CylinderGeometry(0.03, 0.02, 0.25, 6);
+        const tail = new THREE.Mesh(tailGeo, furMat);
+        tail.position.set(-0.35, 0.5, 0);
+        tail.rotation.z = 0.8;
+        tail.castShadow = true;
+        dogGroup.add(tail);
+        
+        const collarGeo = new THREE.TorusGeometry(0.12, 0.02, 8, 16);
+        const collarMat = new THREE.MeshStandardMaterial({ color: 0xE74C3C, roughness: 0.5 });
+        const collar = new THREE.Mesh(collarGeo, collarMat);
+        collar.position.set(0.22, 0.45, 0);
+        collar.rotation.y = Math.PI / 2;
+        dogGroup.add(collar);
+        
+        const tagGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.01, 8);
+        const tagMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8, roughness: 0.3 });
+        const tag = new THREE.Mesh(tagGeo, tagMat);
+        tag.position.set(0.22, 0.34, 0);
+        tag.rotation.x = Math.PI / 2;
+        dogGroup.add(tag);
+        
+        dogGroup.position.set(x, 0, z);
+        dogGroup.rotation.y = rotation;
+        dogGroup.userData = { 
+            type: 'animal', 
+            name: '小黄',
+            walkSpeed: 0.025,
+            wagOffset: Math.random() * Math.PI * 2
+        };
+        return dogGroup;
+    }
+
+    createCat(x, z, rotation = 0) {
+        const catGroup = new THREE.Group();
+        
+        const furMat = new THREE.MeshStandardMaterial({ color: 0xE8A857, roughness: 0.9 });
+        const stripeMat = new THREE.MeshStandardMaterial({ color: 0xC67C2E, roughness: 0.9 });
+        const noseMat = new THREE.MeshStandardMaterial({ color: 0xFFB6C1, roughness: 0.5 });
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x90EE90, roughness: 0.3, emissive: 0x90EE90, emissiveIntensity: 0.1 });
+        const innerEarMat = new THREE.MeshStandardMaterial({ color: 0xFFB6C1, roughness: 0.7 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.35, 12);
+        const body = new THREE.Mesh(bodyGeo, furMat);
+        body.position.y = 0.28;
+        body.rotation.z = Math.PI / 2;
+        body.castShadow = true;
+        catGroup.add(body);
+        
+        const bodyFront = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), furMat);
+        bodyFront.position.set(0.175, 0.28, 0);
+        bodyFront.castShadow = true;
+        catGroup.add(bodyFront);
+        
+        const bodyBack = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), furMat);
+        bodyBack.position.set(-0.175, 0.28, 0);
+        bodyBack.castShadow = true;
+        catGroup.add(bodyBack);
+        
+        for (let i = 0; i < 4; i++) {
+            const stripeGeo = new THREE.BoxGeometry(0.02, 0.2, 0.08);
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.position.set(-0.1 + i * 0.08, 0.38, 0);
+            stripe.rotation.z = 0.2;
+            catGroup.add(stripe);
+        }
+        
+        const headGeo = new THREE.SphereGeometry(0.12, 16, 16);
+        const head = new THREE.Mesh(headGeo, furMat);
+        head.position.set(0.28, 0.35, 0);
+        head.castShadow = true;
+        catGroup.add(head);
+        
+        const leftEarGeo = new THREE.ConeGeometry(0.05, 0.1, 6);
+        const leftEar = new THREE.Mesh(leftEarGeo, furMat);
+        leftEar.position.set(0.23, 0.48, 0.07);
+        leftEar.rotation.z = -0.3;
+        catGroup.add(leftEar);
+        
+        const leftInnerEar = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.07, 6), innerEarMat);
+        leftInnerEar.position.set(0.23, 0.46, 0.07);
+        leftInnerEar.rotation.z = -0.3;
+        catGroup.add(leftInnerEar);
+        
+        const rightEar = new THREE.Mesh(leftEarGeo, furMat);
+        rightEar.position.set(0.23, 0.48, -0.07);
+        rightEar.rotation.z = 0.3;
+        catGroup.add(rightEar);
+        
+        const rightInnerEar = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.07, 6), innerEarMat);
+        rightInnerEar.position.set(0.23, 0.46, -0.07);
+        rightInnerEar.rotation.z = 0.3;
+        catGroup.add(rightInnerEar);
+        
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+        leftEye.position.set(0.33, 0.38, 0.05);
+        catGroup.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), eyeMat);
+        rightEye.position.set(0.33, 0.38, -0.05);
+        catGroup.add(rightEye);
+        
+        const noseGeo = new THREE.SphereGeometry(0.02, 8, 8);
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.position.set(0.38, 0.33, 0);
+        catGroup.add(nose);
+        
+        const whiskerMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.5 });
+        const whiskerGeo = new THREE.CylinderGeometry(0.002, 0.002, 0.12, 4);
+        for (let i = 0; i < 3; i++) {
+            const whiskerL = new THREE.Mesh(whiskerGeo, whiskerMat);
+            whiskerL.position.set(0.4, 0.3 - i * 0.02, 0.06);
+            whiskerL.rotation.z = -0.3 + i * 0.15;
+            catGroup.add(whiskerL);
+            
+            const whiskerR = new THREE.Mesh(whiskerGeo, whiskerMat);
+            whiskerR.position.set(0.4, 0.3 - i * 0.02, -0.06);
+            whiskerR.rotation.z = 0.3 - i * 0.15;
+            catGroup.add(whiskerR);
+        }
+        
+        const legGeo = new THREE.CylinderGeometry(0.025, 0.03, 0.2, 8);
+        const legPositions = [
+            [0.12, 0.1, 0.07], [0.12, 0.1, -0.07],
+            [-0.12, 0.1, 0.07], [-0.12, 0.1, -0.07]
+        ];
+        legPositions.forEach(pos => {
+            const leg = new THREE.Mesh(legGeo, furMat);
+            leg.position.set(pos[0], pos[1], pos[2]);
+            leg.castShadow = true;
+            catGroup.add(leg);
+        });
+        
+        const pawGeo = new THREE.SphereGeometry(0.03, 8, 8);
+        const pawMat = new THREE.MeshStandardMaterial({ color: 0xFFB6C1, roughness: 0.7 });
+        [[0.12, 0.005, 0.07], [0.12, 0.005, -0.07],
+         [-0.12, 0.005, 0.07], [-0.12, 0.005, -0.07]].forEach(pos => {
+            const paw = new THREE.Mesh(pawGeo, pawMat);
+            paw.position.set(pos[0], pos[1], pos[2]);
+            paw.scale.set(1, 0.4, 1);
+            catGroup.add(paw);
+        });
+        
+        const tailCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.25, 0.25, 0),
+            new THREE.Vector3(-0.35, 0.4, 0),
+            new THREE.Vector3(-0.4, 0.55, 0.05),
+            new THREE.Vector3(-0.38, 0.7, 0.1)
+        ]);
+        const tailGeo = new THREE.TubeGeometry(tailCurve, 12, 0.025, 8, false);
+        const tail = new THREE.Mesh(tailGeo, furMat);
+        tail.castShadow = true;
+        catGroup.add(tail);
+        
+        catGroup.position.set(x, 0, z);
+        catGroup.rotation.y = rotation;
+        catGroup.userData = { 
+            type: 'animal', 
+            name: '小花',
+            walkSpeed: 0.015,
+            tailOffset: Math.random() * Math.PI * 2
+        };
+        return catGroup;
+    }
+
+    createPigeon(x, z, rotation = 0) {
+        const birdGroup = new THREE.Group();
+        
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.7 });
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0x696969, roughness: 0.7 });
+        const headMat = new THREE.MeshStandardMaterial({ color: 0x505050, roughness: 0.7 });
+        const beakMat = new THREE.MeshStandardMaterial({ color: 0xFFA500, roughness: 0.5 });
+        const footMat = new THREE.MeshStandardMaterial({ color: 0xFF6B35, roughness: 0.6 });
+        
+        const bodyGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 10);
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.12;
+        body.rotation.z = Math.PI / 2;
+        body.castShadow = true;
+        birdGroup.add(body);
+        
+        const bodyFront = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), bodyMat);
+        bodyFront.position.set(0.05, 0.12, 0);
+        bodyFront.castShadow = true;
+        birdGroup.add(bodyFront);
+        
+        const bodyBack = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), bodyMat);
+        bodyBack.position.set(-0.05, 0.12, 0);
+        bodyBack.castShadow = true;
+        birdGroup.add(bodyBack);
+        
+        const headGeo = new THREE.SphereGeometry(0.05, 12, 12);
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.set(0.1, 0.18, 0);
+        head.castShadow = true;
+        birdGroup.add(head);
+        
+        const neckGeo = new THREE.CylinderGeometry(0.035, 0.04, 0.06, 8);
+        const neck = new THREE.Mesh(neckGeo, bodyMat);
+        neck.position.set(0.06, 0.16, 0);
+        neck.rotation.z = -0.5;
+        birdGroup.add(neck);
+        
+        const beakGeo = new THREE.ConeGeometry(0.02, 0.06, 6);
+        const beak = new THREE.Mesh(beakGeo, beakMat);
+        beak.position.set(0.14, 0.17, 0);
+        beak.rotation.z = -Math.PI / 2;
+        birdGroup.add(beak);
+        
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xFFA500, emissive: 0xFFA500, emissiveIntensity: 0.2 });
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), eyeMat);
+        eye.position.set(0.11, 0.2, 0.03);
+        birdGroup.add(eye);
+        
+        const leftWingGeo = new THREE.BoxGeometry(0.12, 0.02, 0.08);
+        const leftWing = new THREE.Mesh(leftWingGeo, wingMat);
+        leftWing.position.set(0, 0.18, 0.06);
+        leftWing.userData.isWing = true;
+        leftWing.castShadow = true;
+        birdGroup.add(leftWing);
+        
+        const rightWing = new THREE.Mesh(leftWingGeo, wingMat);
+        rightWing.position.set(0, 0.18, -0.06);
+        rightWing.userData.isWing = true;
+        rightWing.castShadow = true;
+        birdGroup.add(rightWing);
+        
+        const tailGeo = new THREE.BoxGeometry(0.06, 0.01, 0.06);
+        const tail = new THREE.Mesh(tailGeo, wingMat);
+        tail.position.set(-0.1, 0.12, 0);
+        birdGroup.add(tail);
+        
+        const legGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.06, 4);
+        const leftLeg = new THREE.Mesh(legGeo, footMat);
+        leftLeg.position.set(0.03, 0.03, 0.02);
+        birdGroup.add(leftLeg);
+        
+        const rightLeg = new THREE.Mesh(legGeo, footMat);
+        rightLeg.position.set(0.03, 0.03, -0.02);
+        birdGroup.add(rightLeg);
+        
+        const footGeo = new THREE.BoxGeometry(0.04, 0.005, 0.03);
+        const leftFoot = new THREE.Mesh(footGeo, footMat);
+        leftFoot.position.set(0.03, 0.002, 0.02);
+        birdGroup.add(leftFoot);
+        
+        const rightFoot = new THREE.Mesh(footGeo, footMat);
+        rightFoot.position.set(0.03, 0.002, -0.02);
+        birdGroup.add(rightFoot);
+        
+        birdGroup.position.set(x, 0, z);
+        birdGroup.rotation.y = rotation;
+        birdGroup.userData = { 
+            type: 'animal', 
+            name: '小鸽子',
+            walkSpeed: 0.01,
+            wingOffset: Math.random() * Math.PI * 2,
+            hopOffset: Math.random() * Math.PI * 2
+        };
+        return birdGroup;
+    }
+
+    createCharacters() {
+        const characters = [
+            { x: -5, z: 38, r: Math.PI, create: this.createElderlyMan.bind(this) },
+            { x: 32, z: 28, r: -Math.PI / 2, create: this.createChild.bind(this) },
+            { x: -10, z: 5, r: Math.PI / 4, create: this.createAuntie.bind(this) },
+            { x: 15, z: -15, r: 0, create: this.createAuntie.bind(this) }
+        ];
+        
+        characters.forEach(char => {
+            const character = char.create(char.x, char.z, char.r);
+            this.characters.push(character);
+            this.scene.add(character);
+        });
+    }
+
+    createAnimals() {
+        const animals = [
+            { x: -3, z: 37, r: Math.PI, create: this.createDog.bind(this) },
+            { x: 10, z: -12, r: Math.PI / 2, create: this.createCat.bind(this) },
+            { x: 5, z: -8, r: 0, create: this.createPigeon.bind(this) },
+            { x: 8, z: -5, r: Math.PI, create: this.createPigeon.bind(this) },
+            { x: 2, z: -10, r: -Math.PI / 4, create: this.createPigeon.bind(this) }
+        ];
+        
+        animals.forEach(anim => {
+            const animal = anim.create(anim.x, anim.z, anim.r);
+            this.animals.push(animal);
+            this.scene.add(animal);
+        });
+    }
+
     setCameraView(viewName) {
         this.currentView = viewName;
         
@@ -868,6 +1548,57 @@ class ParkScene {
         });
     }
 
+    animateCharacter(character, time) {
+        const data = character.userData;
+        const sway = Math.sin(time * 2 + data.swayOffset) * 0.02;
+        
+        character.position.y = sway;
+        
+        if (data.name === '小明') {
+            const jump = Math.abs(Math.sin(time * 3 + data.jumpOffset)) * 0.05;
+            character.position.y += jump;
+            
+            if (character.children[13]) {
+                character.children[13].position.y = 1.8 + Math.sin(time * 2) * 0.1;
+            }
+        }
+        
+        const leftArm = character.children[8];
+        const rightArm = character.children[9];
+        if (leftArm) leftArm.rotation.z = 0.3 + Math.sin(time * 3 + data.swayOffset) * 0.2;
+        if (rightArm) rightArm.rotation.z = -0.3 - Math.sin(time * 3 + data.swayOffset) * 0.2;
+    }
+
+    animateAnimal(animal, time) {
+        const data = animal.userData;
+        
+        if (data.name === '小黄') {
+            const tail = animal.children[15];
+            if (tail) {
+                tail.rotation.y = Math.sin(time * 5 + data.wagOffset) * 0.5;
+            }
+            animal.position.y = Math.sin(time * 2 + data.wagOffset) * 0.01;
+        }
+        
+        if (data.name === '小花') {
+            const tail = animal.children[22];
+            if (tail) {
+                tail.rotation.y = Math.sin(time * 1.5 + data.tailOffset) * 0.3;
+            }
+            animal.position.y = Math.sin(time * 1.2 + data.tailOffset) * 0.008;
+        }
+        
+        if (data.name === '小鸽子') {
+            const leftWing = animal.children[6];
+            const rightWing = animal.children[7];
+            if (leftWing) leftWing.rotation.z = Math.sin(time * 8 + data.wingOffset) * 0.4;
+            if (rightWing) rightWing.rotation.z = -Math.sin(time * 8 + data.wingOffset) * 0.4;
+            
+            const hop = Math.abs(Math.sin(time * 4 + data.hopOffset)) * 0.02;
+            animal.position.y = hop;
+        }
+    }
+
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
         
@@ -877,6 +1608,14 @@ class ParkScene {
             if (obj instanceof THREE.PointLight) {
                 obj.intensity = 0.6 + Math.sin(time * 2 + obj.position.x) * 0.2;
             }
+        });
+        
+        this.characters.forEach(char => {
+            this.animateCharacter(char, time);
+        });
+        
+        this.animals.forEach(animal => {
+            this.animateAnimal(animal, time);
         });
         
         if (this.controls) {
