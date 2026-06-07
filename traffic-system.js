@@ -121,7 +121,7 @@ class TrafficSystem {
         const createStraightRoad = (x, z, width, length, rotation) => {
             const roadGeo = new THREE.BoxGeometry(length, 0.4, width);
             const road = new THREE.Mesh(roadGeo, roadMat);
-            road.position.set(x, 0.2, z);
+            road.position.set(x, 0.8, z);
             road.rotation.y = rotation;
             road.receiveShadow = true;
             roadGroup.add(road);
@@ -129,7 +129,7 @@ class TrafficSystem {
             if (width >= this.MAIN_ROAD_WIDTH) {
                 const centerGeo = new THREE.PlaneGeometry(length, 0.15);
                 const centerLine = new THREE.Mesh(centerGeo, centerMarkingMat);
-                centerLine.position.set(x, 0.41, z);
+                centerLine.position.set(x, 1.01, z);
                 centerLine.rotation.x = -Math.PI / 2;
                 centerLine.rotation.y = rotation;
                 roadGroup.add(centerLine);
@@ -140,11 +140,11 @@ class TrafficSystem {
             const edge2 = new THREE.Mesh(edgeGeo, edgeMarkingMat);
             
             if (rotation === 0) {
-                edge1.position.set(x, 0.41, z + width / 2 - 0.1);
-                edge2.position.set(x, 0.41, z - width / 2 + 0.1);
+                edge1.position.set(x, 1.01, z + width / 2 - 0.1);
+                edge2.position.set(x, 1.01, z - width / 2 + 0.1);
             } else {
-                edge1.position.set(x + width / 2 - 0.1, 0.41, z);
-                edge2.position.set(x - width / 2 + 0.1, 0.41, z);
+                edge1.position.set(x + width / 2 - 0.1, 1.01, z);
+                edge2.position.set(x - width / 2 + 0.1, 1.01, z);
             }
             edge1.rotation.x = -Math.PI / 2;
             edge2.rotation.x = -Math.PI / 2;
@@ -156,7 +156,7 @@ class TrafficSystem {
         const createIntersection = (x, z, size) => {
             const intersectionGeo = new THREE.BoxGeometry(size, 0.4, size);
             const intersection = new THREE.Mesh(intersectionGeo, roadMat);
-            intersection.position.set(x, 0.2, z);
+            intersection.position.set(x, 0.8, z);
             intersection.receiveShadow = true;
             roadGroup.add(intersection);
             
@@ -171,7 +171,7 @@ class TrafficSystem {
             
             positions.forEach(pos => {
                 const crosswalk = new THREE.Mesh(crosswalkGeo, crosswalkMat);
-                crosswalk.position.set(x + pos.x, 0.42, z + pos.z);
+                crosswalk.position.set(x + pos.x, 1.02, z + pos.z);
                 crosswalk.rotation.x = -Math.PI / 2;
                 crosswalk.rotation.y = pos.rot;
                 roadGroup.add(crosswalk);
@@ -206,7 +206,7 @@ class TrafficSystem {
         const createSidewalk = (x, z, w, l, rot) => {
             const sidewalkGeo = new THREE.BoxGeometry(l, 0.25, w);
             const sidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
-            sidewalk.position.set(x, 0.125, z);
+            sidewalk.position.set(x, 0.725, z);
             sidewalk.rotation.y = rot;
             sidewalk.receiveShadow = true;
             roadGroup.add(sidewalk);
@@ -686,7 +686,7 @@ class TrafficSystem {
             const p2 = path.points[(config.pointIdx + 1) % path.points.length];
             
             vehicle.position.lerpVectors(p1, p2, config.progress);
-            vehicle.position.y = 0.4;
+            vehicle.position.y = 1.0;
             
             const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
             vehicle.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI / 2;
@@ -854,7 +854,7 @@ class TrafficSystem {
                 const currentP2 = path.points[currentNextIdx];
                 
                 vehicle.position.lerpVectors(currentP1, currentP2, data.progress);
-                vehicle.position.y = 0.4;
+                vehicle.position.y = 1.0;
                 
                 const dir = new THREE.Vector3().subVectors(currentP2, currentP1).normalize();
                 if (dir.length() > 0.1) {

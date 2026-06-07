@@ -1895,11 +1895,11 @@ class ParkScene {
 
     createShops() {
         const shopConfigs = [
-            { x: 80, z: 0, r: Math.PI, create: this.createConvenienceStore.bind(this) },
-            { x: -80, z: 0, r: 0, create: this.createBookstore.bind(this) },
-            { x: 0, z: 80, r: Math.PI, create: this.createCoffeeShop.bind(this) },
-            { x: 0, z: -80, r: 0, create: this.createFlowerShop.bind(this) },
-            { x: 60, z: 60, r: -Math.PI * 3 / 4, create: this.createIceCreamShop.bind(this) }
+            { x: 95, z: 0, r: Math.PI, create: this.createConvenienceStore.bind(this) },
+            { x: -95, z: 0, r: 0, create: this.createBookstore.bind(this) },
+            { x: 0, z: 95, r: Math.PI, create: this.createCoffeeShop.bind(this) },
+            { x: 0, z: -95, r: 0, create: this.createFlowerShop.bind(this) },
+            { x: 75, z: 75, r: -Math.PI * 3 / 4, create: this.createIceCreamShop.bind(this) }
         ];
         
         shopConfigs.forEach(config => {
@@ -2050,11 +2050,11 @@ class ParkScene {
         const customerConfigs = [];
         
         const shopPositions = [
-            { x: 70, z: 0, r: Math.PI },
-            { x: -70, z: 0, r: 0 },
-            { x: 0, z: 70, r: Math.PI },
-            { x: 0, z: -70, r: 0 },
-            { x: 55, z: 55, r: -Math.PI * 3 / 4 }
+            { x: 88, z: 0, r: Math.PI },
+            { x: -88, z: 0, r: 0 },
+            { x: 0, z: 88, r: Math.PI },
+            { x: 0, z: -88, r: 0 },
+            { x: 70, z: 70, r: -Math.PI * 3 / 4 }
         ];
         
         shopPositions.forEach(pos => {
@@ -2072,8 +2072,8 @@ class ParkScene {
         
         for (let i = 0; i < 5; i++) {
             customerConfigs.push({
-                x: (Math.random() - 0.5) * 160,
-                z: (Math.random() - 0.5) * 160,
+                x: (Math.random() - 0.5) * 180,
+                z: (Math.random() - 0.5) * 180,
                 r: Math.random() * Math.PI * 2,
                 type: customerTypes[Math.floor(Math.random() * customerTypes.length)]
             });
@@ -2094,12 +2094,12 @@ class ParkScene {
             landscape: { pos: new THREE.Vector3(15, 8, 25), target: new THREE.Vector3(0, 2, 0) },
             facility: { pos: new THREE.Vector3(-8, 3, 8), target: new THREE.Vector3(-20, 1, 5) },
             playground: { pos: new THREE.Vector3(40, 8, 35), target: new THREE.Vector3(30, 2, 25) },
-            shops: { pos: new THREE.Vector3(100, 60, 100), target: new THREE.Vector3(0, 0, 0) },
-            convenience: { pos: new THREE.Vector3(95, 15, 5), target: new THREE.Vector3(80, 3, 0) },
-            coffee: { pos: new THREE.Vector3(5, 15, 95), target: new THREE.Vector3(0, 3, 80) },
-            bookstore: { pos: new THREE.Vector3(-95, 15, 5), target: new THREE.Vector3(-80, 3, 0) },
-            flower: { pos: new THREE.Vector3(5, 15, -95), target: new THREE.Vector3(0, 3, -80) },
-            icecream: { pos: new THREE.Vector3(75, 15, 75), target: new THREE.Vector3(60, 3, 60) },
+            shops: { pos: new THREE.Vector3(120, 70, 120), target: new THREE.Vector3(0, 0, 0) },
+            convenience: { pos: new THREE.Vector3(110, 15, 5), target: new THREE.Vector3(95, 3, 0) },
+            coffee: { pos: new THREE.Vector3(5, 15, 110), target: new THREE.Vector3(0, 3, 95) },
+            bookstore: { pos: new THREE.Vector3(-110, 15, 5), target: new THREE.Vector3(-95, 3, 0) },
+            flower: { pos: new THREE.Vector3(5, 15, -110), target: new THREE.Vector3(0, 3, -95) },
+            icecream: { pos: new THREE.Vector3(90, 15, 90), target: new THREE.Vector3(75, 3, 75) },
             free: { pos: new THREE.Vector3(50, 30, 50), target: new THREE.Vector3(0, 5, 0) }
         };
         
