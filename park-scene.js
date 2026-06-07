@@ -2697,8 +2697,9 @@ class ParkScene {
             idleTime: 3 + Math.random() * 5,
             moveTime: 2 + Math.random() * 4,
             pauseChance: type === 'cat' ? 0.5 : 0.3,
-            followCharacter: type === 'dog' ? this.characters[0] : null,
-            followDistance: 2
+            animalType: type,
+            followDistance: 2,
+            followCharacterSet: false
         };
     }
 
@@ -2767,6 +2768,11 @@ class ParkScene {
     updateAnimalAI(animal, delta) {
         const ai = animal.userData.ai;
         if (!ai) return { isMoving: false, isFlying: false };
+        
+        if (!ai.followCharacterSet && ai.animalType === 'dog' && this.characters.length > 0) {
+            ai.followCharacter = this.characters[0];
+            ai.followCharacterSet = true;
+        }
         
         ai.stateTimer -= delta;
         
@@ -3046,14 +3052,14 @@ class ParkScene {
     }
 
     animateHumanCharacter(character, time, delta) {
+        const aiResult = this.updateCharacterAI(character, delta);
+        const isMoving = aiResult.isMoving;
+        const moveDirection = aiResult.direction;
+        
         const state = character.userData.animationState;
         const bones = character.userData.bones;
         
         if (!state || !bones) return;
-        
-        const aiResult = this.updateCharacterAI(character, delta);
-        const isMoving = aiResult.isMoving;
-        const moveDirection = aiResult.direction;
         
         if (isMoving) {
             state.setState('walk', moveDirection);
@@ -3109,14 +3115,14 @@ class ParkScene {
     }
 
     animateDogCharacter(animal, time, delta) {
+        const aiResult = this.updateAnimalAI(animal, delta);
+        const isMoving = aiResult.isMoving;
+        const moveDirection = 'forward';
+        
         const state = animal.userData.animationState;
         const bones = animal.userData.bones;
         
         if (!state || !bones) return;
-        
-        const aiResult = this.updateAnimalAI(animal, delta);
-        const isMoving = aiResult.isMoving;
-        const moveDirection = 'forward';
         
         if (isMoving) {
             state.setState('walk', moveDirection);
@@ -3189,13 +3195,13 @@ class ParkScene {
     }
 
     animateCatCharacter(animal, time, delta) {
+        const aiResult = this.updateAnimalAI(animal, delta);
+        const isMoving = aiResult.isMoving;
+        
         const state = animal.userData.animationState;
         const bones = animal.userData.bones;
         
         if (!state || !bones) return;
-        
-        const aiResult = this.updateAnimalAI(animal, delta);
-        const isMoving = aiResult.isMoving;
         
         if (isMoving) {
             state.setState('walk', 'forward');
@@ -3255,14 +3261,14 @@ class ParkScene {
     }
 
     animatePigeonCharacter(animal, time, delta) {
+        const aiResult = this.updateAnimalAI(animal, delta);
+        let isMoving = aiResult.isMoving;
+        let isFlying = false;
+        
         const state = animal.userData.animationState;
         const bones = animal.userData.bones;
         
         if (!state || !bones) return;
-        
-        const aiResult = this.updateAnimalAI(animal, delta);
-        let isMoving = aiResult.isMoving;
-        let isFlying = false;
         
         if (state.currentState !== 'fly' && Math.random() < 0.0005) {
             isFlying = true;
@@ -3454,6 +3460,22 @@ class ParkScene {
             console.log('   - 当前状态:', state.currentState);
             console.log('   - 混合权重:', state.blendWeight.toFixed(2));
         }
+        
+        console.log('🤖 AI运动系统测试:');
+        let aiEnabledCount = 0;
+        this.characters.forEach((char, idx) => {
+            if (char.userData.ai) {
+                aiEnabledCount++;
+                console.log(`   - 角色${idx} (${char.userData.name}): AI=${char.userData.ai.currentState}, 速度=${char.userData.ai.moveSpeed.toFixed(1)}`);
+            }
+        });
+        this.animals.forEach((animal, idx) => {
+            if (animal.userData.ai) {
+                aiEnabledCount++;
+                console.log(`   - 动物${idx} (${animal.userData.name}): AI=${animal.userData.ai.currentState}, 速度=${animal.userData.ai.moveSpeed.toFixed(1)}`);
+            }
+        });
+        console.log('   - 启用AI的角色数:', aiEnabledCount);
         
         const fileSize = new Blob([JSON.stringify(this.characters) + JSON.stringify(this.animals)]).size;
         console.log('📦 角色数据大小:', (fileSize / 1024).toFixed(2), 'KB');
